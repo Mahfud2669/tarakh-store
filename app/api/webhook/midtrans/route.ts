@@ -10,12 +10,18 @@ export async function POST(request: NextRequest) {
     console.log("=== MIDTRANS WEBHOOK ===")
     console.log("Webhook payload:", JSON.stringify(body, null, 2))
 
-    const { order_id, transaction_status, fraud_status, payment_type, transaction_id, signature_key } = body
+    const { order_id, transaction_status, fraud_status, payment_type, transaction_id, signature_key, gross_amount } =
+      body
+
+    if (!order_id || !transaction_status || !signature_key) {
+      console.error("Missing required webhook fields")
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
 
     // Verify signature
     const expectedSignature = crypto
       .createHash("sha512")
-      .update(`${order_id}${transaction_status}${body.gross_amount}${MIDTRANS_SERVER_KEY}`)
+      .update(`${order_id}${transaction_status}${gross_amount}${MIDTRANS_SERVER_KEY}`)
       .digest("hex")
 
     if (signature_key !== expectedSignature) {
@@ -72,6 +78,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Webhook error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+      },
+      { status: 500 },
+    )
   }
 }

@@ -158,6 +158,28 @@
       transform: scale(1);
     }
   }
+
+  /* Ensure form elements are interactive */
+  [data-radix-dialog-content] input,
+  [data-radix-dialog-content] button,
+  [data-radix-dialog-content] [role="button"] {
+    pointer-events: auto !important;
+    z-index: 1 !important;
+    position: relative;
+  }
+
+  /* Fix for card selection */
+  [data-radix-dialog-content] .cursor-pointer {
+    pointer-events: auto !important;
+    z-index: 1 !important;
+  }
+
+  /* Ensure modal content is above overlay */
+  .modal-content-fix {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+  }
 }
 
 /* Ensure Midtrans Snap popup has the highest z-index */
@@ -170,13 +192,15 @@
   z-index: 99998 !important;
 }
 
-/* Ensure our modal doesn't interfere */
+/* Fix our modal z-index to be lower than Midtrans but higher than page content */
 [data-radix-dialog-overlay] {
-  z-index: 50 !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
 }
 
 [data-radix-dialog-content] {
-  z-index: 51 !important;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
 }
 
 /* Custom scrollbar for modal */

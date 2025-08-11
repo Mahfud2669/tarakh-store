@@ -43,42 +43,30 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
   const [loadingPackages, setLoadingPackages] = useState(false)
   const [packageError, setPackageError] = useState<string | null>(null)
 
+  // Check Snap loading
   useEffect(() => {
-    // More robust check for Snap loading
     const checkSnapLoaded = () => {
       if (typeof window !== "undefined") {
-        console.log("Checking Snap availability...")
-
-        // Check if script tag exists
-        const scriptExists = document.querySelector('script[src*="snap.js"]')
-        console.log("Script tag exists:", !!scriptExists)
-
-        // Check if window.snap is available
         const snapAvailable = window.snap && typeof window.snap.pay === "function"
-        console.log("Window.snap available:", snapAvailable)
 
         if (snapAvailable) {
           setIsSnapLoaded(true)
           setDebugInfo("✅ Midtrans Snap loaded successfully")
-          console.log("Midtrans Snap loaded successfully")
         } else {
           setDebugInfo("⏳ Loading Midtrans Snap...")
-          // Retry after a longer delay
           setTimeout(checkSnapLoaded, 500)
         }
       }
     }
 
-    // Start checking immediately and also after a delay
-    checkSnapLoaded()
-    const timer = setTimeout(checkSnapLoaded, 1000)
-
-    return () => clearTimeout(timer)
+    if (isOpen) {
+      checkSnapLoaded()
+    }
   }, [isOpen])
 
   // Fallback packages function
-  function getFallbackPackages(gameId: string): GamePackage[] {
-    const mlPackages = [
+  const getFallbackPackages = (gameId: string): GamePackage[] => {
+    const mlPackages: GamePackage[] = [
       {
         id: 1,
         game_id: gameId,
@@ -141,7 +129,7 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
       },
     ]
 
-    const defaultPackages = [
+    const defaultPackages: GamePackage[] = [
       {
         id: 1,
         game_id: gameId,
@@ -215,23 +203,18 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
 
       fetch(`/api/games/${game.game_id}/packages`)
         .then(async (response) => {
-          console.log("Packages API response status:", response.status)
-
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
 
           const contentType = response.headers.get("content-type")
           if (!contentType || !contentType.includes("application/json")) {
-            const text = await response.text()
-            console.error("Non-JSON response:", text.substring(0, 200))
             throw new Error("Server returned non-JSON response")
           }
 
           return response.json()
         })
         .then((data) => {
-          console.log("Packages API response:", data)
           if (data.success && data.packages) {
             setPackages(data.packages)
           } else {
@@ -241,7 +224,6 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
         .catch((error) => {
           console.error("Error fetching packages:", error)
           setPackageError(error.message)
-          // Use fallback packages
           setPackages(getFallbackPackages(game.game_id))
         })
         .finally(() => {
@@ -263,13 +245,14 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
   if (!game) return null
 
   const handlePayment = async () => {
-    console.log("Payment button clicked")
-    console.log("Form data:", { selectedPackage, userId, serverId })
-    console.log("Snap loaded:", isSnapLoaded)
-    console.log("Window.snap:", typeof window !== "undefined" ? !!window.snap : "undefined")
-
-    if (!selectedPackage || !userId) {
+    // Validation
+    if (!selectedPackage || !userId.trim()) {
       alert("Mohon lengkapi semua data!")
+      return
+    }
+
+    if (game.game_id === "ml" && !serverId.trim()) {
+      alert("Server ID wajib diisi untuk Mobile Legends!")
       return
     }
 
@@ -282,8 +265,6 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
     setDebugInfo("🔄 Memproses pembayaran...")
 
     try {
-      console.log("Sending payment request to API...")
-
       const response = await fetch("/api/payment", {
         method: "POST",
         headers: {
@@ -292,56 +273,46 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
         body: JSON.stringify({
           game: game.name,
           package: { ...selectedPackage, game_id: game.game_id },
-          userId,
-          serverId,
+          userId: userId.trim(),
+          serverId: serverId.trim() || null,
           amount: selectedPackage.price,
         }),
       })
 
-      console.log("API Response status:", response.status)
-
       if (!response.ok) {
         const errorText = await response.text()
-        console.error("API Error:", errorText)
         throw new Error(`HTTP ${response.status}: ${errorText}`)
       }
 
       const data = await response.json()
-      console.log("API Response data:", data)
 
-      if (data.token) {
+      if (data.success && data.token) {
         setDebugInfo("💳 Membuka halaman pembayaran...")
-        console.log("Opening Snap payment with token:", data.token)
 
-        // Close the current modal to prevent z-index conflicts
+        // Close modal before opening payment
         onClose()
 
-        // Add a small delay to ensure modal is closed
         setTimeout(() => {
           window.snap.pay(data.token, {
             onSuccess: (result: any) => {
               console.log("Payment success:", result)
               alert("Pembayaran berhasil! Top-up akan diproses dalam beberapa menit.")
-              setDebugInfo("✅ Pembayaran berhasil!")
             },
             onPending: (result: any) => {
               console.log("Payment pending:", result)
               alert("Pembayaran pending, silakan selesaikan pembayaran")
-              setDebugInfo("⏳ Pembayaran pending...")
             },
             onError: (result: any) => {
               console.error("Payment error:", result)
               alert("Pembayaran gagal! Silakan coba lagi.")
-              setDebugInfo("❌ Pembayaran gagal!")
             },
             onClose: () => {
               console.log("Payment popup closed")
-              setDebugInfo("🔄 Siap untuk pembayaran")
             },
           })
         }, 300)
       } else {
-        throw new Error("Token pembayaran tidak diterima: " + (data.error || "Unknown error"))
+        throw new Error(data.error || "Token pembayaran tidak diterima")
       }
     } catch (error) {
       console.error("Payment error:", error)
@@ -353,55 +324,63 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
     }
   }
 
-  const isFormValid = selectedPackage && userId && (game.game_id !== "ml" || serverId)
+  const isFormValid = selectedPackage && userId.trim() && (game.game_id !== "ml" || serverId.trim())
   const canPay = isFormValid && isSnapLoaded && !isProcessing
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto z-40">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">Top Up {game.name}</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-center">Top Up {game.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Debug Info */}
           {debugInfo && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800">{debugInfo}</p>
+              <p className="text-xs sm:text-sm text-blue-800">{debugInfo}</p>
             </div>
           )}
 
           {/* Package Error Info */}
           {packageError && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-yellow-800">⚠️ Menggunakan paket fallback: {packageError}</p>
+              <p className="text-xs sm:text-sm text-yellow-800">⚠️ Menggunakan paket fallback: {packageError}</p>
             </div>
           )}
 
           {/* User ID Input */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <Label htmlFor="userId">User ID / Player ID *</Label>
+              <Label htmlFor="userId" className="text-sm sm:text-base block mb-2">
+                User ID / Player ID *
+              </Label>
               <Input
                 id="userId"
+                type="text"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 placeholder="Masukkan User ID"
-                className="mt-1"
+                className="w-full"
                 required
+                disabled={isProcessing}
               />
             </div>
 
             {game.game_id === "ml" && (
               <div>
-                <Label htmlFor="serverId">Server ID *</Label>
+                <Label htmlFor="serverId" className="text-sm sm:text-base block mb-2">
+                  Server ID *
+                </Label>
                 <Input
                   id="serverId"
+                  type="text"
                   value={serverId}
                   onChange={(e) => setServerId(e.target.value)}
                   placeholder="Masukkan Server ID"
-                  className="mt-1"
+                  className="w-full"
                   required
+                  disabled={isProcessing}
                 />
               </div>
             )}
@@ -411,38 +390,47 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
 
           {/* Package Selection */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Pilih Paket Top Up *</h3>
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Pilih Paket Top Up *</h3>
 
             {loadingPackages ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 {[...Array(6)].map((_, index) => (
                   <Card key={index} className="animate-pulse">
-                    <CardContent className="p-4 text-center">
-                      <div className="h-6 bg-gray-300 rounded mb-2"></div>
-                      <div className="h-6 bg-gray-300 rounded"></div>
+                    <CardContent className="p-3 sm:p-4 text-center">
+                      <div className="h-5 sm:h-6 bg-gray-300 rounded mb-2"></div>
+                      <div className="h-5 sm:h-6 bg-gray-300 rounded"></div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {packages.map((pkg, index) => (
-                  <Card
-                    key={index}
-                    className={`cursor-pointer transition-all ${
-                      selectedPackage === pkg ? "ring-2 ring-teal-500 bg-teal-50" : "hover:shadow-md"
-                    }`}
-                    onClick={() => setSelectedPackage(pkg)}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <div className="text-lg font-bold text-teal-600">
-                        {pkg.diamonds} {game.game_id === "ml" ? "Diamonds" : "Credits"}
-                      </div>
-                      {pkg.bonus > 0 && <div className="text-sm text-green-600">+{pkg.bonus} Bonus</div>}
-                      <div className="text-lg font-semibold mt-2">Rp {pkg.price.toLocaleString("id-ID")}</div>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                {packages
+                  .filter(
+                    (pkg, index, self) =>
+                      index === self.findIndex((p) => p.diamonds === pkg.diamonds && p.price === pkg.price),
+                  )
+                  .map((pkg, index) => (
+                    <Card
+                      key={`${pkg.game_id}-${pkg.diamonds}-${pkg.price}`}
+                      className={`cursor-pointer transition-all ${
+                        selectedPackage?.diamonds === pkg.diamonds && selectedPackage?.price === pkg.price
+                          ? "ring-2 ring-teal-500 bg-teal-50"
+                          : "hover:shadow-md"
+                      } ${isProcessing ? "pointer-events-none opacity-50" : ""}`}
+                      onClick={() => !isProcessing && setSelectedPackage(pkg)}
+                    >
+                      <CardContent className="p-3 sm:p-4 text-center">
+                        <div className="text-base sm:text-lg font-bold text-teal-600">
+                          {pkg.diamonds} {game.game_id === "ml" ? "Diamonds" : "Credits"}
+                        </div>
+                        {pkg.bonus > 0 && <div className="text-xs sm:text-sm text-green-600">+{pkg.bonus} Bonus</div>}
+                        <div className="text-base sm:text-lg font-semibold mt-2">
+                          Rp {pkg.price.toLocaleString("id-ID")}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
               </div>
             )}
           </div>
@@ -451,27 +439,27 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
           {selectedPackage && (
             <>
               <Separator />
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Ringkasan Pesanan</h4>
-                <div className="space-y-1 text-sm">
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                <h4 className="font-semibold mb-2 text-sm sm:text-base">Ringkasan Pesanan</h4>
+                <div className="space-y-1 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span>Game:</span>
-                    <span>{game.name}</span>
+                    <span className="text-right">{game.name}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Paket:</span>
-                    <span>
+                    <span className="text-right">
                       {selectedPackage.diamonds} {game.game_id === "ml" ? "Diamonds" : "Credits"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>User ID:</span>
-                    <span>{userId || "-"}</span>
+                    <span className="text-right truncate max-w-[150px]">{userId || "-"}</span>
                   </div>
                   {serverId && (
                     <div className="flex justify-between">
                       <span>Server ID:</span>
-                      <span>{serverId}</span>
+                      <span className="text-right">{serverId}</span>
                     </div>
                   )}
                   <Separator className="my-2" />
@@ -489,7 +477,9 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
             <Button
               onClick={handlePayment}
               disabled={!canPay}
-              className={`w-full ${canPay ? "bg-teal-600 hover:bg-teal-700" : "bg-gray-400 cursor-not-allowed"}`}
+              className={`w-full text-sm sm:text-base ${
+                canPay ? "bg-teal-600 hover:bg-teal-700" : "bg-gray-400 cursor-not-allowed"
+              }`}
               size="lg"
             >
               {isProcessing
@@ -502,7 +492,9 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
             </Button>
 
             {!isFormValid && (
-              <p className="text-sm text-red-600 text-center">* Mohon lengkapi semua field yang wajib diisi</p>
+              <p className="text-xs sm:text-sm text-red-600 text-center">
+                * Mohon lengkapi semua field yang wajib diisi
+              </p>
             )}
           </div>
         </div>

@@ -9,6 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Tarakh Store - Toko Top Up Game Terpercaya",
   description: "Top up game online terpercaya dengan berbagai pilihan game populer",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -32,12 +33,6 @@ export default function RootLayout({
           src="https://app.sandbox.midtrans.com/snap/snap.js"
           data-client-key="Mid-client-p2beYI8iXi1qxLJk"
           strategy="afterInteractive"
-          onLoad={() => {
-            console.log("Midtrans Snap script loaded successfully")
-          }}
-          onError={(e) => {
-            console.error("Failed to load Midtrans Snap script:", e)
-          }}
         />
       </body>
     </html>

@@ -169,15 +169,15 @@ export function GameGrid() {
 
   if (loading) {
     return (
-      <section className="py-16 px-6 bg-white">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 bg-white">
         <div className="container mx-auto">
           <h3 className="text-3xl font-bold text-center mb-12 text-gray-800">Memuat Game...</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6 max-w-6xl mx-auto">
             {[...Array(10)].map((_, index) => (
               <Card key={index} className="animate-pulse">
-                <CardContent className="p-4 text-center">
-                  <div className="w-20 h-20 bg-gray-300 rounded-xl mx-auto mb-3"></div>
-                  <div className="h-4 bg-gray-300 rounded mx-auto"></div>
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-xl mx-auto mb-2 sm:mb-3"></div>
+                  <div className="h-3 sm:h-4 bg-gray-300 rounded mx-auto"></div>
                 </CardContent>
               </Card>
             ))}
@@ -189,9 +189,9 @@ export function GameGrid() {
 
   return (
     <>
-      <section className="py-16 px-6 bg-white">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 bg-white">
         <div className="container mx-auto">
-          <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 animate-fade-in">
+          <h3 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12 text-gray-800 animate-fade-in">
             Pilih Game Favorit Anda
           </h3>
 
@@ -201,7 +201,7 @@ export function GameGrid() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6 max-w-6xl mx-auto">
             {games.map((game, index) => (
               <Card
                 key={game.game_id}
@@ -209,19 +209,19 @@ export function GameGrid() {
                 style={{ animationDelay: `${index * 0.1}s` }}
                 onClick={() => handleGameClick(game)}
               >
-                <CardContent className="p-4 text-center">
+                <CardContent className="p-3 sm:p-4 text-center">
                   <div
-                    className={`w-20 h-20 ${game.color || "bg-gradient-to-br from-gray-500 to-gray-600"} rounded-xl mx-auto mb-3 flex items-center justify-center shadow-lg`}
+                    className={`w-16 h-16 sm:w-20 sm:h-20 ${game.color || "bg-gradient-to-br from-gray-500 to-gray-600"} rounded-xl mx-auto mb-2 sm:mb-3 flex items-center justify-center shadow-lg`}
                   >
                     <Image
                       src={game.image_url || "/placeholder.svg"}
                       alt={game.name}
-                      width={48}
-                      height={48}
-                      className="rounded-lg"
+                      width={40}
+                      height={40}
+                      className="sm:w-12 sm:h-12 rounded-lg"
                     />
                   </div>
-                  <h4 className="font-semibold text-sm text-gray-800 leading-tight">{game.name}</h4>
+                  <h4 className="font-semibold text-xs sm:text-sm text-gray-800 leading-tight">{game.name}</h4>
                 </CardContent>
               </Card>
             ))}

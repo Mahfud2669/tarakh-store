@@ -9,15 +9,35 @@ export async function POST(request: NextRequest) {
     const { game, package: selectedPackage, userId, serverId, amount } = body
 
     console.log("=== PAYMENT API REQUEST ===")
-    console.log("Game:", game)
-    console.log("User ID:", userId)
-    console.log("Server ID:", serverId)
-    console.log("Amount:", amount)
-    console.log("Package:", selectedPackage)
+    console.log("Request body:", JSON.stringify(body, null, 2))
 
     // Validate required fields
     if (!game || !selectedPackage || !userId || !amount) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      console.error("Missing required fields:", {
+        game: !!game,
+        package: !!selectedPackage,
+        userId: !!userId,
+        amount: !!amount,
+      })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Missing required fields",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Validate package structure
+    if (!selectedPackage.diamonds || !selectedPackage.game_id) {
+      console.error("Invalid package structure:", selectedPackage)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid package data",
+        },
+        { status: 400 },
+      )
     }
 
     // Generate unique order ID
@@ -28,7 +48,7 @@ export async function POST(request: NextRequest) {
     try {
       const transaction = await createGameTransaction({
         order_id: orderId,
-        game_id: selectedPackage.game_id || "unknown",
+        game_id: selectedPackage.game_id,
         game_name: game,
         user_id: userId,
         server_id: serverId,
@@ -96,7 +116,13 @@ export async function POST(request: NextRequest) {
       data = JSON.parse(responseText)
     } catch (parseError) {
       console.error("Failed to parse Midtrans response:", parseError)
-      return NextResponse.json({ error: "Invalid response from payment gateway" }, { status: 500 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid response from payment gateway",
+        },
+        { status: 500 },
+      )
     }
 
     if (midtransResponse.ok && data.token) {
@@ -115,6 +141,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         {
+          success: false,
           error: data.error_messages || data.message || "Failed to create payment token",
           details: data,
         },
@@ -127,6 +154,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
+        success: false,
         error: "Internal server error",
         message: error instanceof Error ? error.message : "Unknown error",
       },

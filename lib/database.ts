@@ -210,9 +210,9 @@ export async function getGamePackages(gameId: string): Promise<GamePackage[]> {
     }
 
     const packages = await sql`
-      SELECT * FROM game_packages 
+      SELECT DISTINCT ON (diamonds, price) * FROM game_packages 
       WHERE game_id = ${gameId} AND is_active = true 
-      ORDER BY price ASC
+      ORDER BY diamonds, price, id ASC
     `
 
     if (packages.length === 0) {
@@ -441,5 +441,78 @@ export async function updateGameTransactionStatus(
   } catch (error) {
     console.error("Error updating game transaction status:", error)
     return null
+  }
+}
+
+// Additional functions needed for webhook
+export async function getTransactionByOrderId(orderId: string): Promise<GameTransaction | null> {
+  try {
+    const tableExists = await sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'game_transactions'
+      );
+    `
+
+    if (!tableExists[0]?.exists) {
+      console.log("Game transactions table doesn't exist")
+      return null
+    }
+
+    const [transaction] = await sql`
+      SELECT * FROM game_transactions 
+      WHERE order_id = ${orderId}
+      LIMIT 1
+    `
+
+    return (transaction as GameTransaction) || null
+  } catch (error) {
+    console.error("Error getting transaction by order ID:", error)
+    return null
+  }
+}
+
+export async function updateTransactionStatus(
+  orderId: string,
+  status: string,
+  midtransData?: {
+    transaction_id?: string
+    status?: string
+    payment_method?: string
+  },
+): Promise<GameTransaction | null> {
+  return updateGameTransactionStatus(orderId, status, midtransData)
+}
+
+export async function logTransactionStatus(
+  transactionId: number,
+  statusFrom: string,
+  statusTo: string,
+  notes?: string,
+): Promise<void> {
+  try {
+    const tableExists = await sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'game_transaction_logs'
+      );
+    `
+
+    if (!tableExists[0]?.exists) {
+      console.log("Game transaction logs table doesn't exist, skipping log")
+      return
+    }
+
+    await sql`
+      INSERT INTO game_transaction_logs (
+        transaction_id, status_from, status_to, notes
+      ) VALUES (
+        ${transactionId}, ${statusFrom}, ${statusTo}, ${notes || null}
+      )
+    `
+  } catch (error) {
+    console.error("Error logging transaction status:", error)
   }
 }
