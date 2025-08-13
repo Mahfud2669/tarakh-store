@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircle, AlertCircle, Loader2, Gamepad2 } from "lucide-react"
 import type { Game, GamePackage } from "@/lib/database"
 
 // Declare Midtrans Snap types
@@ -39,7 +41,6 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
   const [serverId, setServerId] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSnapLoaded, setIsSnapLoaded] = useState(false)
-  const [debugInfo, setDebugInfo] = useState("")
   const [loadingPackages, setLoadingPackages] = useState(false)
   const [packageError, setPackageError] = useState<string | null>(null)
 
@@ -48,12 +49,8 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
     const checkSnapLoaded = () => {
       if (typeof window !== "undefined") {
         const snapAvailable = window.snap && typeof window.snap.pay === "function"
-
-        if (snapAvailable) {
-          setIsSnapLoaded(true)
-          setDebugInfo("✅ Midtrans Snap loaded successfully")
-        } else {
-          setDebugInfo("⏳ Loading Midtrans Snap...")
+        setIsSnapLoaded(snapAvailable)
+        if (!snapAvailable) {
           setTimeout(checkSnapLoaded, 500)
         }
       }
@@ -201,34 +198,72 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
       setLoadingPackages(true)
       setPackageError(null)
 
-      fetch(`/api/games/${game.game_id}/packages`)
-        .then(async (response) => {
+      const fetchPackages = async () => {
+        try {
+          console.log("=== FETCHING PACKAGES ===")
+          console.log("Game ID:", game.game_id)
+
+          const response = await fetch(`/api/games/${game.game_id}/packages`)
+
+          console.log("Response status:", response.status)
+          console.log("Response ok:", response.ok)
+
+          // Handle non-200 responses
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+            console.error("API returned error status:", response.status)
+            throw new Error(`API Error: ${response.status}`)
           }
 
+          // Check content type
           const contentType = response.headers.get("content-type")
+          console.log("Content type:", contentType)
+
           if (!contentType || !contentType.includes("application/json")) {
+            console.error("Non-JSON response received")
+            const textResponse = await response.text()
+            console.error("Response text:", textResponse.substring(0, 500))
             throw new Error("Server returned non-JSON response")
           }
 
-          return response.json()
-        })
-        .then((data) => {
-          if (data.success && data.packages) {
+          // Parse JSON
+          const data = await response.json()
+          console.log("Parsed data:", data)
+
+          if (data.success && data.packages && Array.isArray(data.packages)) {
             setPackages(data.packages)
+            setPackageError(null)
+            console.log("✅ Packages loaded successfully:", data.packages.length)
           } else {
-            throw new Error(data.error || "Failed to fetch packages")
+            console.error("Invalid data structure:", data)
+            throw new Error("Invalid response structure")
           }
-        })
-        .catch((error) => {
-          console.error("Error fetching packages:", error)
-          setPackageError(error.message)
-          setPackages(getFallbackPackages(game.game_id))
-        })
-        .finally(() => {
+        } catch (error) {
+          console.error("=== PACKAGE FETCH ERROR ===")
+          console.error("Error details:", error)
+
+          // Set user-friendly error message
+          if (error instanceof Error) {
+            if (error.message.includes("500")) {
+              setPackageError("Server sedang bermasalah")
+            } else if (error.message.includes("fetch")) {
+              setPackageError("Koneksi internet bermasalah")
+            } else {
+              setPackageError("Gagal memuat paket")
+            }
+          } else {
+            setPackageError("Terjadi kesalahan tidak dikenal")
+          }
+
+          // Use fallback packages
+          const fallbackPackages = getFallbackPackages(game.game_id)
+          setPackages(fallbackPackages)
+          console.log("✅ Using fallback packages:", fallbackPackages.length)
+        } finally {
           setLoadingPackages(false)
-        })
+        }
+      }
+
+      fetchPackages()
     }
   }, [game, isOpen])
 
@@ -262,9 +297,10 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
     }
 
     setIsProcessing(true)
-    setDebugInfo("🔄 Memproses pembayaran...")
 
     try {
+      console.log("=== INITIATING PAYMENT ===")
+
       const response = await fetch("/api/payment", {
         method: "POST",
         headers: {
@@ -279,15 +315,32 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
         }),
       })
 
+      console.log("Payment API Response Status:", response.status)
+
+      // Handle different error status codes
       if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`HTTP ${response.status}: ${errorText}`)
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+
+        let userMessage = "Terjadi kesalahan saat memproses pembayaran"
+
+        if (response.status === 503) {
+          userMessage = "Server pembayaran tidak dapat dijangkau. Silakan cek koneksi internet dan coba lagi."
+        } else if (response.status === 504) {
+          userMessage = "Koneksi ke server pembayaran timeout. Silakan coba lagi."
+        } else if (response.status === 502) {
+          userMessage = "Server pembayaran memberikan respons yang tidak valid."
+        } else if (errorData.error) {
+          userMessage = errorData.error
+        }
+
+        throw new Error(userMessage)
       }
 
       const data = await response.json()
+      console.log("Payment API Response:", data)
 
       if (data.success && data.token) {
-        setDebugInfo("💳 Membuka halaman pembayaran...")
+        console.log("✅ Payment token received successfully")
 
         // Close modal before opening payment
         onClose()
@@ -315,10 +368,11 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
         throw new Error(data.error || "Token pembayaran tidak diterima")
       }
     } catch (error) {
-      console.error("Payment error:", error)
-      const errorMessage = error instanceof Error ? error.message : "Unknown error"
-      alert(`Terjadi kesalahan: ${errorMessage}`)
-      setDebugInfo("❌ Error: " + errorMessage)
+      console.error("=== PAYMENT ERROR ===")
+      console.error("Error details:", error)
+
+      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan tidak dikenal"
+      alert(`❌ ${errorMessage}`)
     } finally {
       setIsProcessing(false)
     }
@@ -329,173 +383,232 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-2xl max-h-[95vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl font-bold text-center">Top Up {game.name}</DialogTitle>
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto modal-scroll bg-white">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-center flex items-center justify-center gap-2">
+            <Gamepad2 className="w-6 h-6 text-teal-600" />
+            Top Up {game.name}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 sm:space-y-6">
-          {/* Debug Info */}
-          {debugInfo && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-xs sm:text-sm text-blue-800">{debugInfo}</p>
-            </div>
-          )}
-
-          {/* Package Error Info */}
-          {packageError && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-xs sm:text-sm text-yellow-800">⚠️ Menggunakan paket fallback: {packageError}</p>
-            </div>
-          )}
-
-          {/* User ID Input */}
-          <div className="space-y-3 sm:space-y-4">
-            <div>
-              <Label htmlFor="userId" className="text-sm sm:text-base block mb-2">
-                User ID / Player ID *
-              </Label>
-              <Input
-                id="userId"
-                type="text"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder="Masukkan User ID"
-                className="w-full"
-                required
-                disabled={isProcessing}
-              />
+        <div className="space-y-6">
+          {/* Status Messages */}
+          <div className="space-y-2">
+            {/* Snap Status */}
+            <div
+              className={`flex items-center gap-2 p-3 rounded-lg ${
+                isSnapLoaded ? "bg-green-50 border border-green-200" : "bg-yellow-50 border border-yellow-200"
+              }`}
+            >
+              {isSnapLoaded ? (
+                <CheckCircle className="w-4 h-4 text-green-600" />
+              ) : (
+                <Loader2 className="w-4 h-4 text-yellow-600 animate-spin" />
+              )}
+              <p className={`text-sm ${isSnapLoaded ? "text-green-800" : "text-yellow-800"}`}>
+                {isSnapLoaded ? "Sistem pembayaran siap" : "Memuat sistem pembayaran..."}
+              </p>
             </div>
 
-            {game.game_id === "ml" && (
-              <div>
-                <Label htmlFor="serverId" className="text-sm sm:text-base block mb-2">
-                  Server ID *
-                </Label>
-                <Input
-                  id="serverId"
-                  type="text"
-                  value={serverId}
-                  onChange={(e) => setServerId(e.target.value)}
-                  placeholder="Masukkan Server ID"
-                  className="w-full"
-                  required
-                  disabled={isProcessing}
-                />
+            {/* Package Error */}
+            {packageError && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 border border-orange-200">
+                <AlertCircle className="w-4 h-4 text-orange-600" />
+                <p className="text-sm text-orange-800">{packageError} - Menggunakan data cadangan</p>
               </div>
             )}
           </div>
 
-          <Separator />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column - Form */}
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    1
+                  </span>
+                  Masukkan Data Akun
+                </h3>
 
-          {/* Package Selection */}
-          <div>
-            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Pilih Paket Top Up *</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="userId" className="text-sm font-medium block mb-2">
+                      User ID / Player ID *
+                    </Label>
+                    <Input
+                      id="userId"
+                      type="text"
+                      value={userId}
+                      onChange={(e) => setUserId(e.target.value)}
+                      placeholder={`Masukkan User ID ${game.name}`}
+                      className="w-full h-12"
+                      required
+                      disabled={isProcessing}
+                    />
+                  </div>
 
-            {loadingPackages ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                {[...Array(6)].map((_, index) => (
-                  <Card key={index} className="animate-pulse">
-                    <CardContent className="p-3 sm:p-4 text-center">
-                      <div className="h-5 sm:h-6 bg-gray-300 rounded mb-2"></div>
-                      <div className="h-5 sm:h-6 bg-gray-300 rounded"></div>
-                    </CardContent>
-                  </Card>
-                ))}
+                  {game.game_id === "ml" && (
+                    <div>
+                      <Label htmlFor="serverId" className="text-sm font-medium block mb-2">
+                        Server ID *
+                      </Label>
+                      <Input
+                        id="serverId"
+                        type="text"
+                        value={serverId}
+                        onChange={(e) => setServerId(e.target.value)}
+                        placeholder="Masukkan Server ID"
+                        className="w-full h-12"
+                        required
+                        disabled={isProcessing}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Contoh: 1234 (Server ID dapat ditemukan di profil game)
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                {packages
-                  .filter(
-                    (pkg, index, self) =>
-                      index === self.findIndex((p) => p.diamonds === pkg.diamonds && p.price === pkg.price),
-                  )
-                  .map((pkg, index) => (
-                    <Card
-                      key={`${pkg.game_id}-${pkg.diamonds}-${pkg.price}`}
-                      className={`cursor-pointer transition-all ${
-                        selectedPackage?.diamonds === pkg.diamonds && selectedPackage?.price === pkg.price
-                          ? "ring-2 ring-teal-500 bg-teal-50"
-                          : "hover:shadow-md"
-                      } ${isProcessing ? "pointer-events-none opacity-50" : ""}`}
-                      onClick={() => !isProcessing && setSelectedPackage(pkg)}
-                    >
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-base sm:text-lg font-bold text-teal-600">
-                          {pkg.diamonds} {game.game_id === "ml" ? "Diamonds" : "Credits"}
-                        </div>
-                        {pkg.bonus > 0 && <div className="text-xs sm:text-sm text-green-600">+{pkg.bonus} Bonus</div>}
-                        <div className="text-base sm:text-lg font-semibold mt-2">
-                          Rp {pkg.price.toLocaleString("id-ID")}
-                        </div>
+
+              {/* Order Summary */}
+              {selectedPackage && (
+                <div className="bg-white p-4 rounded-lg border-2 border-teal-200 shadow-sm">
+                  <h4 className="font-semibold mb-3 text-gray-800 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                      3
+                    </span>
+                    Ringkasan Pesanan
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Game:</span>
+                      <span className="font-medium">{game.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Paket:</span>
+                      <span className="font-medium">
+                        {selectedPackage.diamonds} {game.game_id === "ml" ? "Diamonds" : "Credits"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">User ID:</span>
+                      <span className="font-medium truncate max-w-[150px]">{userId || "-"}</span>
+                    </div>
+                    {serverId && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Server ID:</span>
+                        <span className="font-medium">{serverId}</span>
+                      </div>
+                    )}
+                    <Separator className="my-2" />
+                    <div className="flex justify-between text-lg font-bold text-teal-700">
+                      <span>Total Bayar:</span>
+                      <span>Rp {selectedPackage.price.toLocaleString("id-ID")}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Button */}
+              <div className="space-y-3">
+                <Button
+                  onClick={handlePayment}
+                  disabled={!canPay}
+                  className={`w-full h-12 text-base font-semibold ${
+                    canPay
+                      ? "bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Memproses Pembayaran...
+                    </>
+                  ) : !isSnapLoaded ? (
+                    "Memuat Sistem Pembayaran..."
+                  ) : !isFormValid ? (
+                    "Lengkapi Data Terlebih Dahulu"
+                  ) : (
+                    <>💳 Bayar Sekarang</>
+                  )}
+                </Button>
+
+                {!isFormValid && (
+                  <p className="text-sm text-red-600 text-center">* Mohon lengkapi semua field yang wajib diisi</p>
+                )}
+
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">
+                    Pembayaran aman dengan Midtrans • QRIS • GoPay • Bank Transfer
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Package Selection */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  2
+                </span>
+                Pilih Paket Top Up
+              </h3>
+
+              {loadingPackages ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[...Array(6)].map((_, index) => (
+                    <Card key={index} className="animate-pulse">
+                      <CardContent className="p-4 text-center">
+                        <div className="h-6 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-6 bg-gray-300 rounded"></div>
                       </CardContent>
                     </Card>
                   ))}
-              </div>
-            )}
-          </div>
-
-          {/* Order Summary */}
-          {selectedPackage && (
-            <>
-              <Separator />
-              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
-                <h4 className="font-semibold mb-2 text-sm sm:text-base">Ringkasan Pesanan</h4>
-                <div className="space-y-1 text-xs sm:text-sm">
-                  <div className="flex justify-between">
-                    <span>Game:</span>
-                    <span className="text-right">{game.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Paket:</span>
-                    <span className="text-right">
-                      {selectedPackage.diamonds} {game.game_id === "ml" ? "Diamonds" : "Credits"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>User ID:</span>
-                    <span className="text-right truncate max-w-[150px]">{userId || "-"}</span>
-                  </div>
-                  {serverId && (
-                    <div className="flex justify-between">
-                      <span>Server ID:</span>
-                      <span className="text-right">{serverId}</span>
-                    </div>
-                  )}
-                  <Separator className="my-2" />
-                  <div className="flex justify-between font-semibold">
-                    <span>Total:</span>
-                    <span>Rp {selectedPackage.price.toLocaleString("id-ID")}</span>
-                  </div>
                 </div>
-              </div>
-            </>
-          )}
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                  {packages
+                    .filter(
+                      (pkg, index, self) =>
+                        index === self.findIndex((p) => p.diamonds === pkg.diamonds && p.price === pkg.price),
+                    )
+                    .map((pkg) => (
+                      <Card
+                        key={`${pkg.game_id}-${pkg.diamonds}-${pkg.price}`}
+                        className={`cursor-pointer transition-all duration-200 ${
+                          selectedPackage?.diamonds === pkg.diamonds && selectedPackage?.price === pkg.price
+                            ? "ring-2 ring-teal-500 bg-teal-50 shadow-lg scale-105 border-teal-200"
+                            : "hover:shadow-md hover:scale-102 border-gray-200 bg-white"
+                        } ${isProcessing ? "pointer-events-none opacity-50" : ""}`}
+                        onClick={() => !isProcessing && setSelectedPackage(pkg)}
+                      >
+                        <CardContent className="p-4 text-center relative">
+                          {selectedPackage?.diamonds === pkg.diamonds && selectedPackage?.price === pkg.price && (
+                            <div className="absolute -top-2 -right-2">
+                              <Badge className="bg-teal-600 text-white">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Dipilih
+                              </Badge>
+                            </div>
+                          )}
 
-          {/* Payment Button */}
-          <div className="space-y-2">
-            <Button
-              onClick={handlePayment}
-              disabled={!canPay}
-              className={`w-full text-sm sm:text-base ${
-                canPay ? "bg-teal-600 hover:bg-teal-700" : "bg-gray-400 cursor-not-allowed"
-              }`}
-              size="lg"
-            >
-              {isProcessing
-                ? "Memproses..."
-                : !isSnapLoaded
-                  ? "Memuat Sistem Pembayaran..."
-                  : !isFormValid
-                    ? "Lengkapi Data Terlebih Dahulu"
-                    : "Bayar Sekarang"}
-            </Button>
-
-            {!isFormValid && (
-              <p className="text-xs sm:text-sm text-red-600 text-center">
-                * Mohon lengkapi semua field yang wajib diisi
-              </p>
-            )}
+                          <div className="text-lg font-bold text-teal-700 mb-1">
+                            {pkg.diamonds} {game.game_id === "ml" ? "💎" : "🪙"}
+                          </div>
+                          <div className="text-sm text-gray-600 mb-2">
+                            {game.game_id === "ml" ? "Diamonds" : "Credits"}
+                          </div>
+                          {pkg.bonus > 0 && (
+                            <div className="text-xs text-green-600 font-medium mb-2">+{pkg.bonus} Bonus</div>
+                          )}
+                          <div className="text-lg font-bold text-gray-800">Rp {pkg.price.toLocaleString("id-ID")}</div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

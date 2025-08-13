@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Tarakh Store - Toko Top Up Game Terpercaya",
   description: "Top up game online terpercaya dengan berbagai pilihan game populer",
-    generator: 'v0.dev'
+    generator: 'v0.app'
 }
 
 export default function RootLayout({

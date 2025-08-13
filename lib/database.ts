@@ -54,7 +54,13 @@ export interface GameTransaction {
 // Database functions with error handling and fallback
 export async function getGames(): Promise<Game[]> {
   try {
-    // First check if games table exists
+    console.log("=== FETCHING GAMES FROM DATABASE ===")
+
+    // Test database connection first
+    const connectionTest = await sql`SELECT 1 as test`
+    console.log("Database connection test:", connectionTest)
+
+    // Check if games table exists
     const tableExists = await sql`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -63,8 +69,10 @@ export async function getGames(): Promise<Game[]> {
       );
     `
 
+    console.log("Games table exists:", tableExists[0]?.exists)
+
     if (!tableExists[0]?.exists) {
-      console.log("Games table doesn't exist, returning fallback data")
+      console.log("Games table doesn't exist, creating fallback data")
       return getFallbackGames()
     }
 
@@ -74,6 +82,8 @@ export async function getGames(): Promise<Game[]> {
       ORDER BY name ASC
     `
 
+    console.log("Games fetched from database:", games.length)
+
     if (games.length === 0) {
       console.log("No games found in database, returning fallback data")
       return getFallbackGames()
@@ -81,8 +91,17 @@ export async function getGames(): Promise<Game[]> {
 
     return games as Game[]
   } catch (error) {
-    console.error("Error fetching games:", error)
-    console.log("Returning fallback games data")
+    console.error("Database error in getGames:", error)
+
+    // Check if it's a connection error
+    if (error instanceof Error) {
+      if (error.message.includes("connect") || error.message.includes("timeout")) {
+        console.log("Database connection failed, using fallback data")
+      } else {
+        console.log("Database query failed, using fallback data")
+      }
+    }
+
     return getFallbackGames()
   }
 }
@@ -195,6 +214,13 @@ function getFallbackGames(): Game[] {
 
 export async function getGamePackages(gameId: string): Promise<GamePackage[]> {
   try {
+    console.log("=== FETCHING PACKAGES FROM DATABASE ===")
+    console.log("Game ID:", gameId)
+
+    // Test database connection first
+    const connectionTest = await sql`SELECT 1 as test`
+    console.log("Database connection test:", connectionTest)
+
     // Check if game_packages table exists
     const tableExists = await sql`
       SELECT EXISTS (
@@ -203,6 +229,8 @@ export async function getGamePackages(gameId: string): Promise<GamePackage[]> {
         AND table_name = 'game_packages'
       );
     `
+
+    console.log("Game packages table exists:", tableExists[0]?.exists)
 
     if (!tableExists[0]?.exists) {
       console.log("Game packages table doesn't exist, returning fallback data")
@@ -215,6 +243,8 @@ export async function getGamePackages(gameId: string): Promise<GamePackage[]> {
       ORDER BY diamonds, price, id ASC
     `
 
+    console.log("Packages fetched from database:", packages.length)
+
     if (packages.length === 0) {
       console.log("No packages found for game, returning fallback data")
       return getFallbackPackages(gameId)
@@ -222,7 +252,17 @@ export async function getGamePackages(gameId: string): Promise<GamePackage[]> {
 
     return packages as GamePackage[]
   } catch (error) {
-    console.error("Error fetching game packages:", error)
+    console.error("Database error in getGamePackages:", error)
+
+    // Check if it's a connection error
+    if (error instanceof Error) {
+      if (error.message.includes("connect") || error.message.includes("timeout")) {
+        console.log("Database connection failed, using fallback data")
+      } else {
+        console.log("Database query failed, using fallback data")
+      }
+    }
+
     return getFallbackPackages(gameId)
   }
 }
@@ -358,6 +398,7 @@ function getFallbackPackages(gameId: string): GamePackage[] {
   return gameId === "ml" ? mlPackages : defaultPackages
 }
 
+// FIXED: Create transaction function with better error handling
 export async function createGameTransaction(data: {
   order_id: string
   game_id: string
@@ -370,109 +411,62 @@ export async function createGameTransaction(data: {
   customer_phone?: string
 }): Promise<GameTransaction | null> {
   try {
-    // Check if game_transactions table exists
+    console.log("=== CREATING TRANSACTION ===")
+    console.log("Transaction data:", JSON.stringify(data, null, 2))
+
+    // Check if transactions table exists
     const tableExists = await sql`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
-        AND table_name = 'game_transactions'
+        AND table_name = 'transactions'
       );
     `
 
+    console.log("Transactions table exists:", tableExists[0]?.exists)
+
     if (!tableExists[0]?.exists) {
-      console.log("Game transactions table doesn't exist, skipping database insert")
+      console.error("Transactions table doesn't exist! Please run the database setup script.")
       return null
     }
 
-    const [transaction] = await sql`
-      INSERT INTO game_transactions (
+    // Insert transaction
+    const result = await sql`
+      INSERT INTO transactions (
         order_id, game_id, game_name, user_id, server_id, 
         package_diamonds, amount, customer_email, customer_phone, status
       ) VALUES (
-        ${data.order_id}, ${data.game_id}, ${data.game_name}, ${data.user_id}, 
-        ${data.server_id || null}, ${data.package_diamonds}, ${data.amount}, 
-        ${data.customer_email || null}, ${data.customer_phone || null}, 'pending'
+        ${data.order_id}, 
+        ${data.game_id}, 
+        ${data.game_name}, 
+        ${data.user_id}, 
+        ${data.server_id || null}, 
+        ${data.package_diamonds}, 
+        ${data.amount}, 
+        ${data.customer_email || null}, 
+        ${data.customer_phone || null}, 
+        'pending'
       )
       RETURNING *
     `
-    return transaction as GameTransaction
+
+    console.log("Transaction inserted successfully:", result[0])
+    return result[0] as GameTransaction
   } catch (error) {
-    console.error("Error creating game transaction:", error)
-    return null
-  }
-}
+    console.error("=== ERROR CREATING TRANSACTION ===")
+    console.error("Error details:", error)
 
-export async function updateGameTransactionStatus(
-  orderId: string,
-  status: string,
-  midtransData?: {
-    transaction_id?: string
-    status?: string
-    payment_method?: string
-  },
-): Promise<GameTransaction | null> {
-  try {
-    const tableExists = await sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'game_transactions'
-      );
-    `
-
-    if (!tableExists[0]?.exists) {
-      console.log("Game transactions table doesn't exist, skipping update")
-      return null
+    // Try to get more specific error information
+    if (error instanceof Error) {
+      console.error("Error message:", error.message)
+      console.error("Error stack:", error.stack)
     }
 
-    const [transaction] = await sql`
-      UPDATE game_transactions 
-      SET 
-        status = ${status},
-        midtrans_transaction_id = ${midtransData?.transaction_id || null},
-        midtrans_status = ${midtransData?.status || null},
-        payment_method = ${midtransData?.payment_method || null},
-        updated_at = CURRENT_TIMESTAMP,
-        completed_at = ${status === "success" ? "CURRENT_TIMESTAMP" : null}
-      WHERE order_id = ${orderId}
-      RETURNING *
-    `
-    return transaction as GameTransaction
-  } catch (error) {
-    console.error("Error updating game transaction status:", error)
     return null
   }
 }
 
-// Additional functions needed for webhook
-export async function getTransactionByOrderId(orderId: string): Promise<GameTransaction | null> {
-  try {
-    const tableExists = await sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'game_transactions'
-      );
-    `
-
-    if (!tableExists[0]?.exists) {
-      console.log("Game transactions table doesn't exist")
-      return null
-    }
-
-    const [transaction] = await sql`
-      SELECT * FROM game_transactions 
-      WHERE order_id = ${orderId}
-      LIMIT 1
-    `
-
-    return (transaction as GameTransaction) || null
-  } catch (error) {
-    console.error("Error getting transaction by order ID:", error)
-    return null
-  }
-}
-
+// FIXED: Update transaction status function
 export async function updateTransactionStatus(
   orderId: string,
   status: string,
@@ -482,9 +476,82 @@ export async function updateTransactionStatus(
     payment_method?: string
   },
 ): Promise<GameTransaction | null> {
-  return updateGameTransactionStatus(orderId, status, midtransData)
+  try {
+    console.log("=== UPDATING TRANSACTION STATUS ===")
+    console.log("Order ID:", orderId)
+    console.log("New status:", status)
+    console.log("Midtrans data:", midtransData)
+
+    const tableExists = await sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'transactions'
+      );
+    `
+
+    if (!tableExists[0]?.exists) {
+      console.error("Transactions table doesn't exist, skipping update")
+      return null
+    }
+
+    const result = await sql`
+      UPDATE transactions 
+      SET 
+        status = ${status},
+        midtrans_transaction_id = ${midtransData?.transaction_id || null},
+        midtrans_status = ${midtransData?.status || null},
+        payment_method = ${midtransData?.payment_method || null},
+        updated_at = CURRENT_TIMESTAMP,
+        completed_at = ${status === "success" ? sql`CURRENT_TIMESTAMP` : null}
+      WHERE order_id = ${orderId}
+      RETURNING *
+    `
+
+    console.log("Transaction updated successfully:", result[0])
+    return result[0] as GameTransaction
+  } catch (error) {
+    console.error("=== ERROR UPDATING TRANSACTION ===")
+    console.error("Error details:", error)
+    return null
+  }
 }
 
+// FIXED: Get transaction by order ID
+export async function getTransactionByOrderId(orderId: string): Promise<GameTransaction | null> {
+  try {
+    console.log("=== GETTING TRANSACTION BY ORDER ID ===")
+    console.log("Order ID:", orderId)
+
+    const tableExists = await sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'transactions'
+      );
+    `
+
+    if (!tableExists[0]?.exists) {
+      console.error("Transactions table doesn't exist")
+      return null
+    }
+
+    const result = await sql`
+      SELECT * FROM transactions 
+      WHERE order_id = ${orderId}
+      LIMIT 1
+    `
+
+    console.log("Transaction found:", result[0] || "Not found")
+    return (result[0] as GameTransaction) || null
+  } catch (error) {
+    console.error("=== ERROR GETTING TRANSACTION ===")
+    console.error("Error details:", error)
+    return null
+  }
+}
+
+// FIXED: Log transaction status changes
 export async function logTransactionStatus(
   transactionId: number,
   statusFrom: string,
@@ -492,27 +559,73 @@ export async function logTransactionStatus(
   notes?: string,
 ): Promise<void> {
   try {
+    console.log("=== LOGGING TRANSACTION STATUS ===")
+    console.log("Transaction ID:", transactionId)
+    console.log("Status change:", `${statusFrom} -> ${statusTo}`)
+    console.log("Notes:", notes)
+
     const tableExists = await sql`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
-        AND table_name = 'game_transaction_logs'
+        AND table_name = 'transaction_logs'
       );
     `
 
     if (!tableExists[0]?.exists) {
-      console.log("Game transaction logs table doesn't exist, skipping log")
+      console.error("Transaction logs table doesn't exist, skipping log")
       return
     }
 
     await sql`
-      INSERT INTO game_transaction_logs (
+      INSERT INTO transaction_logs (
         transaction_id, status_from, status_to, notes
       ) VALUES (
         ${transactionId}, ${statusFrom}, ${statusTo}, ${notes || null}
       )
     `
+
+    console.log("Transaction status logged successfully")
   } catch (error) {
-    console.error("Error logging transaction status:", error)
+    console.error("=== ERROR LOGGING TRANSACTION STATUS ===")
+    console.error("Error details:", error)
   }
 }
+
+// NEW: Get all transactions for admin/debugging
+export async function getAllTransactions(): Promise<GameTransaction[]> {
+  try {
+    console.log("=== GETTING ALL TRANSACTIONS ===")
+
+    const tableExists = await sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'transactions'
+      );
+    `
+
+    if (!tableExists[0]?.exists) {
+      console.error("Transactions table doesn't exist")
+      return []
+    }
+
+    const result = await sql`
+      SELECT * FROM transactions 
+      ORDER BY created_at DESC
+      LIMIT 100
+    `
+
+    console.log("Found transactions:", result.length)
+    return result as GameTransaction[]
+  } catch (error) {
+    console.error("=== ERROR GETTING ALL TRANSACTIONS ===")
+    console.error("Error details:", error)
+    return []
+  }
+}
+
+// Backward compatibility aliases
+export const createTransaction = createGameTransaction
+export const updateGameTransactionStatus = updateTransactionStatus
+export const getGameTransactionByOrderId = getTransactionByOrderId

@@ -26,15 +26,21 @@ export async function POST(request: NextRequest) {
 
     if (signature_key !== expectedSignature) {
       console.error("Invalid signature")
+      console.error("Expected:", expectedSignature)
+      console.error("Received:", signature_key)
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
     }
+
+    console.log("✅ Signature verified successfully")
 
     // Get existing transaction
     const existingTransaction = await getTransactionByOrderId(order_id)
     if (!existingTransaction) {
-      console.error("Transaction not found:", order_id)
+      console.error("❌ Transaction not found:", order_id)
       return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
     }
+
+    console.log("✅ Transaction found:", existingTransaction.id)
 
     let newStatus = "pending"
 
@@ -53,6 +59,8 @@ export async function POST(request: NextRequest) {
       newStatus = "pending"
     }
 
+    console.log("Status change:", `${existingTransaction.status} -> ${newStatus}`)
+
     // Update transaction status
     const updatedTransaction = await updateTransactionStatus(order_id, newStatus, {
       transaction_id,
@@ -68,20 +76,26 @@ export async function POST(request: NextRequest) {
         newStatus,
         `Midtrans webhook: ${transaction_status}`,
       )
+      console.log("✅ Transaction status logged successfully")
     }
 
-    console.log(`Transaction ${order_id} updated to ${newStatus}`)
+    console.log(`✅ Transaction ${order_id} updated to ${newStatus}`)
 
     return NextResponse.json({
       success: true,
       message: "Webhook processed successfully",
+      order_id: order_id,
+      old_status: existingTransaction.status,
+      new_status: newStatus,
     })
   } catch (error) {
-    console.error("Webhook error:", error)
+    console.error("=== WEBHOOK ERROR ===")
+    console.error("Error details:", error)
     return NextResponse.json(
       {
         success: false,
         error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )

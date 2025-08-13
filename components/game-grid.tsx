@@ -38,7 +38,12 @@ export function GameGrid() {
 
         if (result.success && result.games) {
           setGames(result.games)
-          setError(null)
+          // Only show error if database status indicates a real problem
+          if (result.database_status === "error" || result.database_status === "fallback") {
+            setError("Koneksi database bermasalah")
+          } else {
+            setError(null) // Clear error if database is working
+          }
         } else {
           throw new Error(result.error || "Failed to fetch games")
         }
