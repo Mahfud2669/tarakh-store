@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PackagesTable } from "@/components/admin/packages-table"
 import { PackageForm } from "@/components/admin/package-form"
-import { Plus } from "lucide-react"
+import { Plus, Package, Gamepad2 } from "lucide-react"
 import type { GamePackage, Game } from "@/lib/database"
 
 export default function PackagesManagement() {
@@ -62,6 +62,11 @@ export default function PackagesManagement() {
     fetchData()
   }
 
+  // Get statistics
+  const totalPackages = packages.length
+  const activePackages = packages.filter((pkg) => pkg.is_active).length
+  const gamesWithPackages = new Set(packages.map((pkg) => pkg.game_id)).size
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -69,17 +74,53 @@ export default function PackagesManagement() {
           <h2 className="text-3xl font-bold tracking-tight">Packages Management</h2>
           <p className="text-muted-foreground">Manage top-up packages for all games</p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => setShowForm(true)} className="bg-teal-600 hover:bg-teal-700">
           <Plus className="w-4 h-4 mr-2" />
           Add Package
         </Button>
       </div>
 
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Packages</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalPackages}</div>
+            <p className="text-xs text-muted-foreground">{activePackages} active packages</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Games with Packages</CardTitle>
+            <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{gamesWithPackages}</div>
+            <p className="text-xs text-muted-foreground">out of {games.length} total games</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average per Game</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {gamesWithPackages > 0 ? Math.round(totalPackages / gamesWithPackages) : 0}
+            </div>
+            <p className="text-xs text-muted-foreground">packages per game</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Packages Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>All Packages</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <PackagesTable
             packages={packages}
             games={games}

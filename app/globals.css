@@ -183,25 +183,39 @@
   }
 }
 
+/* FIXED: Admin Modal Z-Index Issues */
+/* Ensure admin modals appear above everything */
+[data-radix-dialog-overlay] {
+  z-index: 99999 !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+[data-radix-dialog-content] {
+  z-index: 100000 !important;
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Ensure admin header stays below modals */
+.admin-header {
+  z-index: 40 !important;
+}
+
+/* Ensure admin sidebar stays below modals */
+.admin-sidebar {
+  z-index: 30 !important;
+}
+
 /* Ensure Midtrans Snap popup has the highest z-index */
 #snap-midtrans {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
 }
 
 /* Fix for Midtrans overlay */
 .snap-overlay {
-  z-index: 99998 !important;
-}
-
-/* Fix our modal z-index to be lower than Midtrans but higher than page content */
-[data-radix-dialog-overlay] {
-  z-index: 9999 !important;
-  pointer-events: auto !important;
-}
-
-[data-radix-dialog-content] {
-  z-index: 10000 !important;
-  pointer-events: auto !important;
+  z-index: 999998 !important;
 }
 
 /* Custom scrollbar for modal */
@@ -221,4 +235,18 @@
 
 .modal-scroll::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* Fix Select dropdown z-index in modals */
+[data-radix-select-content] {
+  z-index: 100001 !important;
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Fix Switch component in modals */
+[data-radix-dialog-content] [data-radix-switch-root] {
+  z-index: 1 !important;
+  position: relative;
 }

@@ -43,7 +43,6 @@ export function GameForm({ game, onClose }: GameFormProps) {
 
     try {
       const url = game ? `/api/admin/games/${game.game_id}` : "/api/admin/games"
-
       const method = game ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -66,14 +65,16 @@ export function GameForm({ game, onClose }: GameFormProps) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{game ? "Edit Game" : "Add New Game"}</DialogTitle>
+      <DialogContent className="max-w-md bg-white border-gray-200 shadow-2xl">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-xl font-bold text-gray-900">{game ? "Edit Game" : "Add New Game"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="game_id">Game ID</Label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="game_id" className="text-sm font-medium text-gray-700">
+              Game ID *
+            </Label>
             <Input
               id="game_id"
               value={formData.game_id}
@@ -81,55 +82,74 @@ export function GameForm({ game, onClose }: GameFormProps) {
               placeholder="ml, pubg, etc."
               disabled={!!game}
               required
+              className="w-full bg-white border-gray-300"
             />
+            {game && <p className="text-xs text-gray-500">Game ID cannot be changed after creation</p>}
           </div>
 
-          <div>
-            <Label htmlFor="name">Game Name</Label>
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+              Game Name *
+            </Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Mobile Legends"
               required
+              className="w-full bg-white border-gray-300"
             />
           </div>
 
-          <div>
-            <Label htmlFor="image_url">Image URL</Label>
+          <div className="space-y-2">
+            <Label htmlFor="image_url" className="text-sm font-medium text-gray-700">
+              Image URL
+            </Label>
             <Input
               id="image_url"
               value={formData.image_url}
               onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
               placeholder="/game-icon.png"
+              className="w-full bg-white border-gray-300"
             />
           </div>
 
-          <div>
-            <Label htmlFor="color">Color Class</Label>
+          <div className="space-y-2">
+            <Label htmlFor="color" className="text-sm font-medium text-gray-700">
+              Color Class
+            </Label>
             <Input
               id="color"
               value={formData.color}
               onChange={(e) => setFormData({ ...formData, color: e.target.value })}
               placeholder="bg-gradient-to-br from-blue-500 to-blue-600"
+              className="w-full bg-white border-gray-300"
             />
+            <p className="text-xs text-gray-500">Tailwind CSS gradient class for game card background</p>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
             <Switch
               id="is_active"
               checked={formData.is_active}
               onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
             />
-            <Label htmlFor="is_active">Active</Label>
+            <Label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+              Active Game
+            </Label>
           </div>
 
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="px-6 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+            <Button type="submit" disabled={loading} className="px-6 bg-teal-600 hover:bg-teal-700 text-white">
+              {loading ? "Saving..." : "Save Game"}
             </Button>
           </div>
         </form>

@@ -39,55 +39,55 @@ export function TransactionsTable({ transactions, loading, onStatusUpdate }: Tra
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left p-4">Order ID</th>
-            <th className="text-left p-4">Game</th>
-            <th className="text-left p-4">User</th>
-            <th className="text-left p-4">Amount</th>
-            <th className="text-left p-4">Status</th>
-            <th className="text-left p-4">Date</th>
-            <th className="text-right p-4">Actions</th>
+    <div className="overflow-x-auto bg-white rounded-lg border border-gray-200">
+      <table className="w-full bg-white">
+        <thead className="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th className="text-left p-4 font-medium text-gray-900 bg-gray-50">Order ID</th>
+            <th className="text-left p-4 font-medium text-gray-900 bg-gray-50">Game</th>
+            <th className="text-left p-4 font-medium text-gray-900 bg-gray-50">User</th>
+            <th className="text-left p-4 font-medium text-gray-900 bg-gray-50">Amount</th>
+            <th className="text-left p-4 font-medium text-gray-900 bg-gray-50">Status</th>
+            <th className="text-left p-4 font-medium text-gray-900 bg-gray-50">Date</th>
+            <th className="text-right p-4 font-medium text-gray-900 bg-gray-50">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="bg-white divide-y divide-gray-200">
           {transactions.map((transaction) => (
-            <tr key={transaction.id} className="border-b hover:bg-gray-50">
-              <td className="p-4">
-                <code className="bg-gray-100 px-2 py-1 rounded text-xs">{transaction.order_id}</code>
+            <tr key={transaction.id} className="bg-white hover:bg-gray-50 transition-colors">
+              <td className="p-4 bg-white">
+                <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">{transaction.order_id}</code>
               </td>
-              <td className="p-4">
+              <td className="p-4 bg-white">
                 <div>
-                  <p className="font-medium">{transaction.game_name}</p>
+                  <p className="font-medium text-gray-900">{transaction.game_name}</p>
                   <p className="text-sm text-gray-500">{transaction.package_diamonds} diamonds</p>
                 </div>
               </td>
-              <td className="p-4">
+              <td className="p-4 bg-white">
                 <div>
-                  <p className="font-medium">{transaction.user_id}</p>
+                  <p className="font-medium text-gray-900">{transaction.user_id}</p>
                   {transaction.server_id && <p className="text-sm text-gray-500">Server: {transaction.server_id}</p>}
                 </div>
               </td>
-              <td className="p-4">
-                <span className="font-medium">Rp {transaction.amount.toLocaleString("id-ID")}</span>
+              <td className="p-4 bg-white">
+                <span className="font-medium text-gray-900">Rp {transaction.amount.toLocaleString("id-ID")}</span>
               </td>
-              <td className="p-4">
+              <td className="p-4 bg-white">
                 <Badge className={getStatusColor(transaction.status)}>{transaction.status}</Badge>
               </td>
-              <td className="p-4 text-sm text-gray-500">
+              <td className="p-4 text-sm text-gray-500 bg-white">
                 {new Date(transaction.created_at).toLocaleDateString("id-ID")}
               </td>
-              <td className="p-4">
+              <td className="p-4 bg-white">
                 <Select
                   value={transaction.status}
                   onValueChange={(newStatus) => onStatusUpdate(transaction.order_id, newStatus)}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 bg-white border-gray-300">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-gray-200 shadow-lg">
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="success">Success</SelectItem>
                     <SelectItem value="failed">Failed</SelectItem>

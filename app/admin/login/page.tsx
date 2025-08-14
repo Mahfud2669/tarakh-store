@@ -13,7 +13,7 @@ import { Loader2, Shield, Eye, EyeOff } from "lucide-react"
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
   })
   const [loading, setLoading] = useState(false)
@@ -37,11 +37,18 @@ export default function AdminLogin() {
 
       const data = await response.json()
 
+      console.log("=== LOGIN RESPONSE ===")
+      console.log("Response status:", response.status)
+      console.log("Response data:", data)
+
       if (data.success) {
-        // Redirect to admin dashboard
-        router.push("/admin")
-        router.refresh()
+        console.log("✅ Login successful, redirecting to dashboard...")
+        console.log("User data:", data.user)
+
+        // Force reload to ensure cookies are properly set
+        window.location.href = "/admin"
       } else {
+        console.error("❌ Login failed:", data.error)
         setError(data.error || "Login gagal")
       }
     } catch (error) {
@@ -77,13 +84,13 @@ export default function AdminLogin() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  placeholder="Masukkan username"
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="Masukkan email admin"
                   required
                   disabled={loading}
                   className="h-11"
@@ -128,13 +135,13 @@ export default function AdminLogin() {
 
             {/* Demo Credentials */}
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</p>
+              <p className="text-sm font-medium text-gray-700 mb-2">Gunakan akun admin Anda:</p>
               <div className="text-sm text-gray-600 space-y-1">
                 <p>
-                  <span className="font-medium">Username:</span> admin
+                  <span className="font-medium">Email:</span> user123@yopmail.com
                 </p>
                 <p>
-                  <span className="font-medium">Password:</span> admin123
+                  <span className="font-medium">Password:</span> [password Anda]
                 </p>
               </div>
             </div>
@@ -142,7 +149,7 @@ export default function AdminLogin() {
             {/* Back to Store */}
             <div className="mt-6 text-center">
               <a href="/" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-                ← Kembali ke Toko
+                Kembali ke Toko
               </a>
             </div>
           </CardContent>
