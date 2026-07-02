@@ -101,7 +101,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">TARAKH STORE</h1>
+            <h1 className="text-2xl font-bold text-white">AKAZA STORE</h1>
             <p className="text-teal-100 text-sm">Admin Dashboard</p>
           </div>
 
