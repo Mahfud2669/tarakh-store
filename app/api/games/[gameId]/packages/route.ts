@@ -132,11 +132,11 @@ function getFallbackPackages(gameId: string) {
   return gameId === "ml" ? mlPackages : defaultPackages
 }
 
-export async function GET(request: NextRequest, { params }: { params: { gameId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ gameId: string }> }) {
   console.log("=== PACKAGES API ROUTE ===")
 
   try {
-    const { gameId } = params
+    const { gameId } = await params
     console.log("Game ID:", gameId)
 
     if (!gameId) {

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
 import { updateTransactionStatus, logTransactionStatus, getTransactionByOrderId } from "@/lib/database"
 
-export async function PATCH(request: Request, { params }: { params: { orderId: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
   try {
     const { status } = await request.json()
-    const { orderId } = params
+    const { orderId } = await params
 
     // Get current transaction
     const currentTransaction = await getTransactionByOrderId(orderId)

@@ -22,11 +22,17 @@ export function middleware(request: NextRequest) {
 
   // Only handle admin routes (except login)
   if (pathname.startsWith("/admin")) {
+    // Allow login and test pages
+    if (pathname === "/admin/login" || pathname === "/admin/test-auth") {
+      console.log("⏭️ Skipping auth check for:", pathname)
+      return NextResponse.next()
+    }
+
     console.log("🔍 Checking admin route:", pathname)
 
     const sessionToken = request.cookies.get("admin-session")?.value
-
-    console.log("🍪 Session token:", sessionToken ? "Found" : "Not found")
+    
+    console.log("🍪 Session token:", sessionToken ? `Found (${sessionToken.substring(0, 16)}...)` : "Not found")
 
     if (!sessionToken) {
       console.log("❌ No session token, redirecting to login")

@@ -42,11 +42,23 @@ export default function AdminLogin() {
       console.log("Response data:", data)
 
       if (data.success) {
-        console.log("✅ Login successful, redirecting to dashboard...")
+        console.log("✅ Login successful, setting up session...")
         console.log("User data:", data.user)
+        console.log("Session token:", data.sessionToken?.substring(0, 16) + "...")
 
-        // Force reload to ensure cookies are properly set
-        window.location.href = "/admin"
+        // Manually set cookie on client side to ensure it's transmitted
+        if (data.sessionToken && data.expiresAt) {
+          const expiresDate = new Date(data.expiresAt)
+          document.cookie = `admin-session=${data.sessionToken}; expires=${expiresDate.toUTCString()}; path=/; SameSite=Lax`
+          console.log("🍪 Cookie set on client side")
+        }
+
+        // Add delay to ensure cookies are set before redirect
+        setTimeout(() => {
+          console.log("🔄 Redirecting to /admin...")
+          // Force full page reload to ensure cookies are sent with the request
+          window.location.href = "/admin"
+        }, 300)
       } else {
         console.error("❌ Login failed:", data.error)
         setError(data.error || "Login gagal")
