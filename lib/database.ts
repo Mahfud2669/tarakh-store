@@ -1,7 +1,22 @@
 import { neon } from "@neondatabase/serverless"
 
-const databaseUrl = process.env.DATABASE_URL || "postgresql://invalid:invalid@localhost/invalid"
-const sql = neon(databaseUrl)
+const databaseUrl =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRES_URL_NON_POOLING
+
+const connectionString =
+  databaseUrl ||
+  (process.env.NEXT_PHASE === "phase-production-build"
+    ? "postgresql://build:build@localhost/build"
+    : undefined)
+
+if (!connectionString) {
+  throw new Error("A database connection is required. Set DATABASE_URL in the Vercel project environment variables.")
+}
+
+const sql = neon(connectionString)
 
 export { sql }
 
