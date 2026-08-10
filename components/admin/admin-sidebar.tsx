@@ -9,6 +9,8 @@ import {
   Gamepad2,
   Package,
   CreditCard,
+  BarChart3,
+  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
@@ -34,6 +36,11 @@ const navigation = [
     href: "/admin/transactions",
     icon: CreditCard,
   },
+  {
+    name: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
+  },
 ]
 
 export function AdminSidebar() {
@@ -55,7 +62,7 @@ export function AdminSidebar() {
               <span className="text-white font-bold text-sm">T</span>
             </div>
             <div>
-              <h2 className="font-bold text-gray-900">AKAZA</h2>
+              <h2 className="font-bold text-gray-900">TARAKH</h2>
               <p className="text-xs text-gray-500">Admin Panel</p>
             </div>
           </div>
@@ -99,10 +106,9 @@ export function AdminSidebar() {
       {/* Footer */}
       {!collapsed && (
         <div className="p-4 border-t border-gray-200">
-        <div className="text-xs text-gray-500 text-center">
-          <p>© 2024 Akaza Store</p>
-          <p>Admin Dashboard v1.0</p>
-        </div>
+          <div className="text-xs text-gray-500 text-center">
+   
+          </div>
         </div>
       )}
     </div>

@@ -26,7 +26,7 @@ export function HeroSection() {
         </div>
 
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-3 sm:mb-4 animate-fade-in px-4">
-          Selamat Datang Di Akaza Store!
+          Selamat Datang Di Tarakh Store!
         </h2>
         <p className="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 animate-fade-in px-4">
           Toko Top Up Game Terpercaya

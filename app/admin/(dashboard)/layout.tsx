@@ -4,23 +4,32 @@ import { getAdminUser } from "@/lib/auth"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { AdminHeader } from "@/components/admin/admin-header"
 
-export default async function AdminLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Check authentication
   const user = await getAdminUser()
 
   if (!user) {
+    console.log("❌ No authenticated user, redirecting to login")
     redirect("/admin/login")
   }
 
+  console.log("✅ Authenticated user:", user.email)
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeader user={user} />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with logout */}
+      <AdminHeader user={user} />
+
+      <div className="flex">
+        {/* Sidebar */}
+        <AdminSidebar />
+
+        {/* Main Content */}
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   )

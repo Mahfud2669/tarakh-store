@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
+import { TopUpModal } from "./topup-modal"
 import type { Game } from "@/lib/database"
 
 export function GameGrid() {
   const [games, setGames] = useState<Game[]>([])
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,11 +37,7 @@ export function GameGrid() {
         console.log("API Response:", result)
 
         if (result.success && result.games) {
-          // Filter only active games for frontend display
-          const activeGames = result.games.filter((game: Game) => game.is_active)
-          setGames(activeGames)
-          console.log(`Showing ${activeGames.length} active games out of ${result.games.length} total games`)
-
+          setGames(result.games)
           // Only show error if database status indicates a real problem
           if (result.database_status === "error" || result.database_status === "fallback") {
             setError("Koneksi database bermasalah")
@@ -53,9 +51,8 @@ export function GameGrid() {
         console.error("Error fetching games:", error)
         setError(error instanceof Error ? error.message : "Unknown error")
 
-        // Use fallback data if API fails (only active games)
-        const fallbackGames = getFallbackGames().filter((game) => game.is_active)
-        setGames(fallbackGames)
+        // Use fallback data if API fails
+        setGames(getFallbackGames())
       } finally {
         setLoading(false)
       }
@@ -170,7 +167,10 @@ export function GameGrid() {
     ]
   }
 
-
+  const handleGameClick = (game: Game) => {
+    setSelectedGame(game)
+    setIsModalOpen(true)
+  }
 
   if (loading) {
     return (
@@ -192,25 +192,6 @@ export function GameGrid() {
     )
   }
 
-  // Show message if no active games
-  if (games.length === 0) {
-    return (
-      <section className="py-12 sm:py-16 px-4 sm:px-6 bg-white">
-        <div className="container mx-auto text-center">
-          <h3 className="text-2xl sm:text-3xl font-bold mb-8 sm:mb-12 text-gray-800">Game Sedang Dalam Maintenance</h3>
-          <p className="text-gray-600 mb-8">
-            Mohon maaf, saat ini tidak ada game yang tersedia. Silakan coba lagi nanti.
-          </p>
-          {error && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-2xl mx-auto">
-              <p className="text-yellow-800 text-sm">⚠️ {error}</p>
-            </div>
-          )}
-        </div>
-      </section>
-    )
-  }
-
   return (
     <>
       <section className="py-12 sm:py-16 px-4 sm:px-6 bg-white">
@@ -227,32 +208,33 @@ export function GameGrid() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6 max-w-6xl mx-auto">
             {games.map((game, index) => (
-              <Link key={game.game_id} href={`/game/${game.game_id}`}>
-                <Card
-                  className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 animate-scale-in border-0 shadow-md h-full"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <CardContent className="p-3 sm:p-4 text-center">
-                    <div
-                      className={`w-16 h-16 sm:w-20 sm:h-20 ${game.color || "bg-gradient-to-br from-gray-500 to-gray-600"} rounded-xl mx-auto mb-2 sm:mb-3 flex items-center justify-center shadow-lg`}
-                    >
-                      <Image
-                        src={game.image_url || "/placeholder.svg"}
-                        alt={game.name}
-                        width={40}
-                        height={40}
-                        className="sm:w-12 sm:h-12 rounded-lg"
-                      />
-                    </div>
-                    <h4 className="font-semibold text-xs sm:text-sm text-gray-800 leading-tight">{game.name}</h4>
-                  </CardContent>
-                </Card>
-              </Link>
+              <Card
+                key={game.game_id}
+                className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 animate-scale-in border-0 shadow-md"
+                style={{ animationDelay: `${index * 0.1}s` }}
+                onClick={() => handleGameClick(game)}
+              >
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div
+                    className={`w-16 h-16 sm:w-20 sm:h-20 ${game.color || "bg-gradient-to-br from-gray-500 to-gray-600"} rounded-xl mx-auto mb-2 sm:mb-3 flex items-center justify-center shadow-lg`}
+                  >
+                    <Image
+                      src={game.image_url || "/placeholder.svg"}
+                      alt={game.name}
+                      width={40}
+                      height={40}
+                      className="sm:w-12 sm:h-12 rounded-lg"
+                    />
+                  </div>
+                  <h4 className="font-semibold text-xs sm:text-sm text-gray-800 leading-tight">{game.name}</h4>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
+      <TopUpModal game={selectedGame} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   )
 }

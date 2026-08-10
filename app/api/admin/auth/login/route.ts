@@ -4,16 +4,6 @@ import { sql } from "@/lib/database"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
 
-// Demo admin account - matches database hash for password "123456"
-const DEMO_ADMIN = {
-  id: 999,
-  email: "mahfud@yopmail.com",
-  password_hash: "$2b$10$eXbzyKHtvPWhMwVYLte/j./r01IaaVaR8cWnx5K2kaIjuGGRgXsOi", // password: 123456
-  name: "Mahfud Admin",
-  role: "admin",
-  is_active: true,
-}
-
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json()
@@ -33,10 +23,8 @@ export async function POST(request: Request) {
       )
     }
 
-    let adminUser = null
-
     try {
-      // Find admin user by email from database
+      // Find admin user by email
       const result = await sql`
         SELECT id, email, password_hash, name, role, is_active, last_login
         FROM admin_accounts 
@@ -45,27 +33,19 @@ export async function POST(request: Request) {
       `
 
       console.log("Database query result:", result.length > 0 ? "User found" : "User not found")
-      adminUser = result[0]
-    } catch (dbError) {
-      console.log("Database query failed, checking demo credentials...")
-    }
 
-    // Fallback to demo admin if database fails
-    if (!adminUser && email === DEMO_ADMIN.email) {
-      console.log("Using demo admin credentials")
-      adminUser = DEMO_ADMIN
-    }
+      const adminUser = result[0]
 
-    if (!adminUser) {
-      console.log("❌ Admin user not found")
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Email atau password salah",
-        },
-        { status: 401 },
-      )
-    }
+      if (!adminUser) {
+        console.log("❌ Admin user not found")
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Email atau password salah",
+          },
+          { status: 401 },
+        )
+      }
 
       console.log("✅ Admin user found:")
       console.log("- ID:", adminUser.id)
@@ -75,54 +55,95 @@ export async function POST(request: Request) {
       console.log("- Hash starts with:", adminUser.password_hash?.substring(0, 10))
       console.log("- Hash length:", adminUser.password_hash?.length)
 
-      // Verify password using bcrypt
+      // Verify password using multiple methods
       let isPasswordValid = false
       let verificationMethod = ""
 
+      // Method 1: Try bcrypt first
       try {
-        console.log("🔍 Verifying password with bcrypt...")
+        console.log("🔍 Trying bcrypt verification...")
         isPasswordValid = await bcrypt.compare(password, adminUser.password_hash)
         if (isPasswordValid) {
           verificationMethod = "bcrypt"
           console.log("✅ Bcrypt verification successful")
         } else {
-          console.log("❌ Bcrypt verification failed, trying fallback...")
-          // Fallback verification methods for development
-          // Check if password matches common test passwords
-          const testPasswords: { [key: string]: string } = {
-            "user123@yopmail.com": "password",
-            "mahfud@yopmail.com": "123456",
-            "admin@tarakh.com": "admin123",
-          }
-          
-          if (testPasswords[email] === password) {
-            isPasswordValid = true
-            verificationMethod = "fallback-test"
-            console.log("✅ Using fallback test password verification")
-          }
+          console.log("❌ Bcrypt verification failed")
         }
       } catch (bcryptError) {
-        console.error("Bcrypt error:", bcryptError)
-        // Additional fallback
-        const testPasswords: { [key: string]: string } = {
-          "user123@yopmail.com": "password",
-          "mahfud@yopmail.com": "123456",
-          "admin@tarakh.com": "admin123",
+        console.error("Bcrypt error:", bcryptError.message)
+      }
+
+      // Method 2: Try different bcrypt versions if first failed
+      if (!isPasswordValid) {
+        try {
+          console.log("🔍 Trying bcrypt with different options...")
+          // Sometimes bcrypt hashes are created with different versions
+          const bcryptResult = bcrypt.compareSync(password, adminUser.password_hash)
+          if (bcryptResult) {
+            isPasswordValid = true
+            verificationMethod = "bcrypt-sync"
+            console.log("✅ Bcrypt sync verification successful")
+          }
+        } catch (bcryptSyncError) {
+          console.error("Bcrypt sync error:", bcryptSyncError.message)
         }
-        
-        if (testPasswords[email] === password) {
+      }
+
+      // Method 3: Try simple SHA256 hash as fallback
+      if (!isPasswordValid) {
+        console.log("🔍 Trying SHA256 verification...")
+        const sha256Hash = crypto
+          .createHash("sha256")
+          .update(password + "tarakh-salt")
+          .digest("hex")
+
+        if (sha256Hash === adminUser.password_hash) {
           isPasswordValid = true
-          verificationMethod = "fallback-error"
-          console.log("✅ Using fallback verification (bcrypt error)")
+          verificationMethod = "sha256"
+          console.log("✅ SHA256 verification successful")
+        } else {
+          console.log("❌ SHA256 verification failed")
+          console.log("Expected:", sha256Hash)
+          console.log("Got:", adminUser.password_hash)
+        }
+      }
+
+      // Method 4: Try MD5 as another fallback
+      if (!isPasswordValid) {
+        console.log("🔍 Trying MD5 verification...")
+        const md5Hash = crypto.createHash("md5").update(password).digest("hex")
+
+        if (md5Hash === adminUser.password_hash) {
+          isPasswordValid = true
+          verificationMethod = "md5"
+          console.log("✅ MD5 verification successful")
+        }
+      }
+
+      // Method 5: Try plain text (not recommended but for debugging)
+      if (!isPasswordValid) {
+        console.log("🔍 Trying plain text verification...")
+        if (password === adminUser.password_hash) {
+          isPasswordValid = true
+          verificationMethod = "plain"
+          console.log("✅ Plain text verification successful")
         }
       }
 
       if (!isPasswordValid) {
-        console.log("❌ Password verification failed")
+        console.log("❌ All password verification methods failed")
+        console.log("Input password:", password)
+        console.log("Stored hash:", adminUser.password_hash)
+
         return NextResponse.json(
           {
             success: false,
             error: "Email atau password salah",
+            debug: {
+              email_found: true,
+              hash_format: adminUser.password_hash?.substring(0, 10),
+              hash_length: adminUser.password_hash?.length,
+            },
           },
           { status: 401 },
         )
@@ -223,6 +244,17 @@ export async function POST(request: Request) {
           last_login: adminUser.last_login,
         },
       })
+    } catch (dbError) {
+      console.error("Database error:", dbError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Terjadi kesalahan database",
+          details: dbError.message,
+        },
+        { status: 500 },
+      )
+    }
   } catch (error) {
     console.error("=== LOGIN ERROR ===")
     console.error("Error details:", error)

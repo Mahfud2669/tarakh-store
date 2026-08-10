@@ -7,7 +7,7 @@ import Script from "next/script"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Akaza Store - Toko Top Up Game Terpercaya",
+  title: "Tarakh Store - Toko Top Up Game Terpercaya",
   description: "Top up game online terpercaya dengan berbagai pilihan game populer",
     generator: 'v0.app'
 }

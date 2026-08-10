@@ -1,10 +1,7 @@
 import { neon } from "@neondatabase/serverless"
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is not defined")
-}
-
-const sql = neon(process.env.DATABASE_URL)
+const databaseUrl = process.env.DATABASE_URL || "postgresql://invalid:invalid@localhost/invalid"
+const sql = neon(databaseUrl)
 
 export { sql }
 
@@ -629,38 +626,3 @@ export async function getAllTransactions(): Promise<GameTransaction[]> {
 export const createTransaction = createGameTransaction
 export const updateGameTransactionStatus = updateTransactionStatus
 export const getGameTransactionByOrderId = getTransactionByOrderId
-
-// Generic query function for admin routes
-export async function query(
-  text: string,
-  params?: (string | number | Date | null | undefined)[],
-): Promise<{ rows: any[]; rowCount: number }> {
-  try {
-    // Use sql function directly - it handles both string and prepared statements
-    if (params && params.length > 0) {
-      // For parameterized queries, construct a template string
-      let query = text
-      params.forEach((param, index) => {
-        const placeholder = `$${index + 1}`
-        // Simple replacement - in production, use proper parameterized queries
-        const value = param === null ? "NULL" : typeof param === "string" ? `'${param}'` : String(param)
-        query = query.replace(placeholder, value)
-      })
-
-      const result = await sql(query)
-      return {
-        rows: Array.isArray(result) ? result : [result],
-        rowCount: Array.isArray(result) ? result.length : 1,
-      }
-    } else {
-      const result = await sql(text)
-      return {
-        rows: Array.isArray(result) ? result : [result],
-        rowCount: Array.isArray(result) ? result.length : 1,
-      }
-    }
-  } catch (error) {
-    console.error("Database query error:", error)
-    return { rows: [], rowCount: 0 }
-  }
-}

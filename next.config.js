@@ -16,12 +16,7 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
-  // Updated for Next.js 15
   serverExternalPackages: ["bcryptjs"],
-  // Add experimental features for better error handling
-  experimental: {
-    serverComponentsExternalPackages: ["bcryptjs"],
-  },
 }
 
 module.exports = nextConfig

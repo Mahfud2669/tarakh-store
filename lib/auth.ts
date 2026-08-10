@@ -82,17 +82,3 @@ export async function requireAdmin(): Promise<AdminUser> {
 
   return user
 }
-
-export async function verifyAdminAuth(request: Request): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
-  try {
-    const user = await getAdminUser()
-
-    if (!user) {
-      return { success: false, error: "Not authenticated" }
-    }
-
-    return { success: true, user }
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Authentication failed" }
-  }
-}
