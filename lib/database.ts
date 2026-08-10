@@ -14,10 +14,10 @@ function getSqlClient(): SqlClient {
   if (client) return client
 
   const connectionString =
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_PRISMA_URL ||
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_URL_NON_POOLING
+    databaseUrl ||
+    process.env.UGmSTn4gKhA9_DATABASE_URL ||
+    process.env.UGmSTn4gKhA9_POSTGRES_URL ||
+    process.env.UGmSTn4gKhA9_POSTGRES_PRISMA_URL
 
   if (!connectionString) {
     throw new Error("Database connection is not configured")
@@ -27,8 +27,7 @@ function getSqlClient(): SqlClient {
   return client
 }
 
-// Initialize on first query instead of module import so routes can return a
-// controlled error when Vercel has not injected the environment variables yet.
+// Initialize on first query so importing a route does not fail during build.
 const sql = ((...args: Parameters<SqlClient>) => getSqlClient()(...args)) as SqlClient
 
 export { sql }
@@ -88,8 +87,8 @@ export async function getGames(): Promise<Game[]> {
     // Check if games table exists
     const tableExists = await sql`
       SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'games'
       );
     `
@@ -102,8 +101,8 @@ export async function getGames(): Promise<Game[]> {
     }
 
     const games = await sql`
-      SELECT * FROM games 
-      WHERE is_active = true 
+      SELECT * FROM games
+      WHERE is_active = true
       ORDER BY name ASC
     `
 
@@ -249,8 +248,8 @@ export async function getGamePackages(gameId: string): Promise<GamePackage[]> {
     // Check if game_packages table exists
     const tableExists = await sql`
       SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'game_packages'
       );
     `
@@ -263,8 +262,8 @@ export async function getGamePackages(gameId: string): Promise<GamePackage[]> {
     }
 
     const packages = await sql`
-      SELECT DISTINCT ON (diamonds, price) * FROM game_packages 
-      WHERE game_id = ${gameId} AND is_active = true 
+      SELECT DISTINCT ON (diamonds, price) * FROM game_packages
+      WHERE game_id = ${gameId} AND is_active = true
       ORDER BY diamonds, price, id ASC
     `
 
@@ -442,8 +441,8 @@ export async function createGameTransaction(data: {
     // Check if transactions table exists
     const tableExists = await sql`
       SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'transactions'
       );
     `
@@ -458,18 +457,18 @@ export async function createGameTransaction(data: {
     // Insert transaction
     const result = await sql`
       INSERT INTO transactions (
-        order_id, game_id, game_name, user_id, server_id, 
+        order_id, game_id, game_name, user_id, server_id,
         package_diamonds, amount, customer_email, customer_phone, status
       ) VALUES (
-        ${data.order_id}, 
-        ${data.game_id}, 
-        ${data.game_name}, 
-        ${data.user_id}, 
-        ${data.server_id || null}, 
-        ${data.package_diamonds}, 
-        ${data.amount}, 
-        ${data.customer_email || null}, 
-        ${data.customer_phone || null}, 
+        ${data.order_id},
+        ${data.game_id},
+        ${data.game_name},
+        ${data.user_id},
+        ${data.server_id || null},
+        ${data.package_diamonds},
+        ${data.amount},
+        ${data.customer_email || null},
+        ${data.customer_phone || null},
         'pending'
       )
       RETURNING *
@@ -509,8 +508,8 @@ export async function updateTransactionStatus(
 
     const tableExists = await sql`
       SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'transactions'
       );
     `
@@ -521,8 +520,8 @@ export async function updateTransactionStatus(
     }
 
     const result = await sql`
-      UPDATE transactions 
-      SET 
+      UPDATE transactions
+      SET
         status = ${status},
         midtrans_transaction_id = ${midtransData?.transaction_id || null},
         midtrans_status = ${midtransData?.status || null},
@@ -550,8 +549,8 @@ export async function getTransactionByOrderId(orderId: string): Promise<GameTran
 
     const tableExists = await sql`
       SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'transactions'
       );
     `
@@ -562,7 +561,7 @@ export async function getTransactionByOrderId(orderId: string): Promise<GameTran
     }
 
     const result = await sql`
-      SELECT * FROM transactions 
+      SELECT * FROM transactions
       WHERE order_id = ${orderId}
       LIMIT 1
     `
@@ -591,8 +590,8 @@ export async function logTransactionStatus(
 
     const tableExists = await sql`
       SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'transaction_logs'
       );
     `
@@ -624,8 +623,8 @@ export async function getAllTransactions(): Promise<GameTransaction[]> {
 
     const tableExists = await sql`
       SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'transactions'
       );
     `
@@ -636,7 +635,7 @@ export async function getAllTransactions(): Promise<GameTransaction[]> {
     }
 
     const result = await sql`
-      SELECT * FROM transactions 
+      SELECT * FROM transactions
       ORDER BY created_at DESC
       LIMIT 100
     `
