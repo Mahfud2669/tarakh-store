@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 import type { Game, GamePackage } from '@/lib/database'
+import { useCart } from '@/components/cart-provider'
+import { CartDrawer } from '@/components/cart-drawer'
 
 interface GameDetailPageProps {
   params: Promise<{
@@ -43,6 +45,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
   const [serverId, setServerId] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSnapLoaded, setIsSnapLoaded] = useState(false)
+  const { addItem } = useCart()
 
   // Unwrap params promise
   useEffect(() => {
@@ -189,7 +192,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
           <Link href="/" className="text-teal-100 hover:text-white mb-3 inline-block">
             ← Kembali ke Beranda
           </Link>
-          <h1 className="text-3xl font-bold">TARAKH STORE</h1>
+          <div className="flex items-center justify-between"><h1 className="text-3xl font-bold">TARAKH STORE</h1><CartDrawer /></div>
           <p className="text-teal-100 mt-1">Game Top-Up Terpercaya</p>
         </div>
       </header>
@@ -310,6 +313,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
                         <p className="font-bold text-teal-600 text-xl mb-1">{(pkg.diamonds || 0).toLocaleString('id-ID')}</p>
                         {(pkg.bonus || 0) > 0 && <p className="text-orange-600 text-sm font-semibold mb-2">+{(pkg.bonus || 0).toLocaleString('id-ID')} Bonus</p>}
                         <p className="text-gray-800 font-bold">Rp {(pkg.price || 0).toLocaleString('id-ID')}</p>
+                        <Button type="button" size="sm" className="mt-3 w-full bg-teal-600 hover:bg-teal-700" onClick={(event) => { event.stopPropagation(); if (!addItem({ gameId: gameId!, gameName: game.name, pkg })) alert('Keranjang hanya dapat berisi package dari satu game.') }}>Masuk Keranjang</Button>
                       </CardContent>
                     </Card>
                   ))}

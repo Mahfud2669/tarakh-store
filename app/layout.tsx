@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import Script from "next/script"
+import { CartProvider } from "@/components/cart-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -20,18 +21,16 @@ export default function RootLayout({
   return (
     <html lang="id">
       <head>
-        {/* Preload Midtrans Snap */}
-        <link rel="preload" href="https://app.sandbox.midtrans.com/snap/snap.js" as="script" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className={inter.className}>
-        {children}
+        <CartProvider>{children}</CartProvider>
 
         {/* Midtrans Snap Script - Load with proper configuration */}
         <Script
           id="midtrans-snap"
           src="https://app.sandbox.midtrans.com/snap/snap.js"
-          data-client-key="Mid-client-p2beYI8iXi1qxLJk"
+          data-client-key={process.env.MIDTRANS_CLIENT_KEY || ""}
           strategy="afterInteractive"
         />
       </body>

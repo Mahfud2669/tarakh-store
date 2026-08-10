@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, AlertCircle, Loader2, Gamepad2 } from "lucide-react"
 import type { Game, GamePackage } from "@/lib/database"
+import { CustomerNotification } from "@/components/customer-notification"
 
 // Declare Midtrans Snap types
 declare global {
@@ -43,6 +44,7 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
   const [isSnapLoaded, setIsSnapLoaded] = useState(false)
   const [loadingPackages, setLoadingPackages] = useState(false)
   const [packageError, setPackageError] = useState<string | null>(null)
+  const [notification, setNotification] = useState<{ message: string; type: "processing" | "success" | "error" } | null>(null)
 
   // Check Snap loading
   useEffect(() => {
@@ -349,7 +351,24 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
           window.snap.pay(data.token, {
             onSuccess: (result: any) => {
               console.log("Payment success:", result)
-              alert("Pembayaran berhasil! Top-up akan diproses dalam beberapa menit.")
+              setNotification({ message: "pembayaran berhasil, mohon tunggu sebentar, pembelian mu sedang di proses...", type: "processing" })
+
+              let attempts = 0
+              const pollStatus = window.setInterval(async () => {
+                attempts += 1
+                try {
+                  const statusResponse = await fetch(`/api/transactions/${encodeURIComponent(data.order_id)}`)
+                  const statusData = await statusResponse.json()
+                  if (statusData.transaction?.status === "success") {
+                    window.clearInterval(pollStatus)
+                    setNotification({ message: "selamat pembelian mu telah berhasil", type: "success" })
+                  } else if (statusData.transaction?.status === "failed" || attempts >= 60) {
+                    window.clearInterval(pollStatus)
+                  }
+                } catch {
+                  if (attempts >= 60) window.clearInterval(pollStatus)
+                }
+              }, 5000)
             },
             onPending: (result: any) => {
               console.log("Payment pending:", result)
@@ -612,6 +631,13 @@ export function TopUpModal({ game, isOpen, onClose }: TopUpModalProps) {
           </div>
         </div>
       </DialogContent>
+      {notification && (
+        <CustomerNotification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </Dialog>
   )
 }
