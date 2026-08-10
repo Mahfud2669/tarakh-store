@@ -6,17 +6,30 @@ const databaseUrl =
   process.env.POSTGRES_URL ||
   process.env.POSTGRES_URL_NON_POOLING
 
-const connectionString =
-  databaseUrl ||
-  (process.env.NEXT_PHASE === "phase-production-build"
-    ? "postgresql://build:build@localhost/build"
-    : undefined)
+type SqlClient = ReturnType<typeof neon>
 
-if (!connectionString) {
-  throw new Error("A database connection is required. Set DATABASE_URL in the Vercel project environment variables.")
+let client: SqlClient | null = null
+
+function getSqlClient(): SqlClient {
+  if (client) return client
+
+  const connectionString =
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_URL_NON_POOLING
+
+  if (!connectionString) {
+    throw new Error("Database connection is not configured")
+  }
+
+  client = neon(connectionString)
+  return client
 }
 
-const sql = neon(connectionString)
+// Initialize on first query instead of module import so routes can return a
+// controlled error when Vercel has not injected the environment variables yet.
+const sql = ((...args: Parameters<SqlClient>) => getSqlClient()(...args)) as SqlClient
 
 export { sql }
 
