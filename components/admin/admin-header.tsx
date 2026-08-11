@@ -33,6 +33,12 @@ interface Transaction {
 export function AdminHeader({ user }: AdminHeaderProps) {
   const [notifications, setNotifications] = useState<Transaction[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [lastReadAt, setLastReadAt] = useState(0)
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("akaza-admin-notifications-read-at")
+    if (stored) setLastReadAt(Number(stored))
+  }, [])
 
   // Fetch recent transactions for notifications
   const fetchNotifications = async () => {
@@ -42,10 +48,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
         const data = await response.json()
         if (data.success) {
           setNotifications(data.transactions || [])
-          // Count transactions from last 24 hours as unread
-          const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
-          const recentCount =
-            data.transactions?.filter((t: Transaction) => new Date(t.created_at) > yesterday).length || 0
+          const recentCount = data.transactions?.filter((t: Transaction) => new Date(t.created_at).getTime() > lastReadAt).length || 0
           setUnreadCount(recentCount)
         }
       }
@@ -59,7 +62,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
     // Poll for new transactions every 30 seconds
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
-  }, [])
+  }, [lastReadAt])
 
   const handleLogout = async () => {
     try {
@@ -107,7 +110,14 @@ export function AdminHeader({ user }: AdminHeaderProps) {
 
           <div className="flex items-center space-x-4">
             {/* Notifications */}
-            <Popover>
+            <Popover onOpenChange={(open) => {
+              if (open) {
+                const readAt = Date.now()
+                window.localStorage.setItem("akaza-admin-notifications-read-at", String(readAt))
+                setLastReadAt(readAt)
+                setUnreadCount(0)
+              }
+            }}>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative text-white hover:bg-teal-600 hover:text-white">
                   <Bell className="w-5 h-5" />

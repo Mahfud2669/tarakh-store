@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ReceiptText } from "lucide-react"
 import { GameGrid } from "@/components/game-grid"
 import { HeroSection } from "@/components/hero-section"
 import { CartDrawer } from "@/components/cart-drawer"
@@ -9,10 +10,9 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 text-white py-4 sm:py-6 px-4 sm:px-6 shadow-lg">
         <div className="container mx-auto">
-          <div className="flex items-center justify-between"><h1 className="text-2xl sm:text-3xl font-bold tracking-wider animate-fade-in">AKAZA STORE</h1><CartDrawer /></div>
+          <div className="flex items-center justify-between"><h1 className="text-2xl sm:text-3xl font-bold tracking-wider animate-fade-in">AKAZA STORE</h1><div className="flex items-center gap-1"><CartDrawer /><Link href="/transactions" aria-label="Buka riwayat transaksi" title="Riwayat transaksi" className="inline-flex h-10 w-10 items-center justify-center rounded-md text-white transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"><ReceiptText className="h-5 w-5" /></Link></div></div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-teal-100 mt-1 text-sm sm:text-base animate-fade-in">Game Top-Up Terpercaya</p>
-            <Link href="/transactions" className="inline-flex w-fit rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/30 transition hover:bg-white/25">Riwayat Transaksi</Link>
           </div>
         </div>
       </header>

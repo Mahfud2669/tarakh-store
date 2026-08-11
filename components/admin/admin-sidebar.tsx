@@ -9,6 +9,7 @@ import {
   Gamepad2,
   Package,
   CreditCard,
+  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
@@ -33,6 +34,11 @@ const navigation = [
     name: "Transactions",
     href: "/admin/transactions",
     icon: CreditCard,
+  },
+  {
+    name: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
   },
 ]
 
@@ -84,7 +90,7 @@ export function AdminSidebar() {
               className={cn(
                 "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg"
+                  ? "bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-200"
                   : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
               )}
               title={collapsed ? item.name : undefined}

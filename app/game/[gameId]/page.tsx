@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, Loader2, CheckCircle } from 'lucide-react'
+import { AlertCircle, Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
 import type { Game, GamePackage } from '@/lib/database'
 import { useCart } from '@/components/cart-provider'
 import { CartDrawer } from '@/components/cart-drawer'
@@ -190,7 +190,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
       <header className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 text-white py-6 px-4 sm:px-6 shadow-lg">
         <div className="container mx-auto">
           <Link href="/" className="text-teal-100 hover:text-white mb-3 inline-block">
-            ← Kembali ke Beranda
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
           <div className="flex items-center justify-between"><h1 className="text-3xl font-bold">TARAKH STORE</h1><CartDrawer /></div>
           <p className="text-teal-100 mt-1">Game Top-Up Terpercaya</p>
@@ -220,89 +220,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
           </Card>
 
           {packages.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Payment Form */}
-              <div>
-                <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-gradient-to-r from-teal-600 to-teal-700 text-white">
-                    <CardTitle>Isi Data Akun & Pilih Paket</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-6">
-                    {/* Snap Status */}
-                    <div className={`flex items-center gap-2 p-3 rounded-lg ${isSnapLoaded ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
-                      {isSnapLoaded ? (
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Loader2 className="w-4 h-4 text-yellow-600 animate-spin" />
-                      )}
-                      <p className={`text-sm ${isSnapLoaded ? 'text-green-800' : 'text-yellow-800'}`}>
-                        {isSnapLoaded ? 'Sistem pembayaran siap' : 'Memuat sistem pembayaran...'}
-                      </p>
-                    </div>
-
-                    {/* User ID */}
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">User ID / Player ID *</Label>
-                      <Input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder={`Masukkan User ID ${game.name}`} className="h-12" disabled={isProcessing} />
-                    </div>
-
-                    {/* Server ID for ML */}
-                    {gameId === 'ml' && (
-                      <div>
-                        <Label className="text-sm font-medium mb-2 block">Server ID *</Label>
-                        <Input value={serverId} onChange={(e) => setServerId(e.target.value)} placeholder="Masukkan Server ID" className="h-12" disabled={isProcessing} />
-                        <p className="text-xs text-gray-500 mt-1">Contoh: 1234 (cek di profil game)</p>
-                      </div>
-                    )}
-
-                    {/* Order Summary */}
-                    {selectedPackage && (
-                      <div className="bg-teal-50 border-2 border-teal-200 rounded-lg p-4">
-                        <h4 className="font-semibold mb-3 text-gray-800">Ringkasan Pesanan</h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Game:</span>
-                            <span className="font-medium">{game.name}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Paket:</span>
-                            <span className="font-medium">{(selectedPackage.diamonds || 0).toLocaleString('id-ID')}</span>
-                          </div>
-                          {(selectedPackage.bonus || 0) > 0 && (
-                            <div className="flex justify-between text-orange-600">
-                              <span>Bonus:</span>
-                              <span className="font-medium">+{(selectedPackage.bonus || 0).toLocaleString('id-ID')}</span>
-                            </div>
-                          )}
-                          <div className="flex justify-between text-lg font-bold text-teal-700 border-t border-teal-200 pt-2 mt-2">
-                            <span>Total:</span>
-                            <span>Rp {(selectedPackage.price || 0).toLocaleString('id-ID')}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Payment Button */}
-                    <Button onClick={handlePayment} disabled={!canPay} className={`w-full h-12 font-semibold ${canPay ? 'bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Memproses...
-                        </>
-                      ) : !isSnapLoaded ? (
-                        'Memuat Sistem...'
-                      ) : !isFormValid ? (
-                        'Lengkapi Data'
-                      ) : (
-                        '💳 Bayar Sekarang'
-                      )}
-                    </Button>
-
-                    <p className="text-xs text-gray-500 text-center">Aman dengan Midtrans • QRIS • GoPay • Bank Transfer</p>
-                  </CardContent>
-                </Card>
-              </div>
-
+            <div className="grid grid-cols-1 gap-8">
               {/* Packages Grid */}
               <div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-6">Pilih Paket</h3>
@@ -313,7 +231,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
                         <p className="font-bold text-teal-600 text-xl mb-1">{(pkg.diamonds || 0).toLocaleString('id-ID')}</p>
                         {(pkg.bonus || 0) > 0 && <p className="text-orange-600 text-sm font-semibold mb-2">+{(pkg.bonus || 0).toLocaleString('id-ID')} Bonus</p>}
                         <p className="text-gray-800 font-bold">Rp {(pkg.price || 0).toLocaleString('id-ID')}</p>
-                        <Button type="button" size="sm" className="mt-3 w-full bg-teal-600 hover:bg-teal-700" onClick={(event) => { event.stopPropagation(); if (!addItem({ gameId: gameId!, gameName: game.name, pkg })) alert('Keranjang hanya dapat berisi package dari satu game.') }}>Masuk Keranjang</Button>
+                        <Button type="button" size="sm" className="mt-3 w-full bg-teal-600 text-white hover:bg-teal-700" onClick={(event) => { event.stopPropagation(); if (!addItem({ gameId: gameId!, gameName: game.name, pkg })) alert('Keranjang hanya dapat berisi package dari satu game.') }}>Masuk Keranjang</Button>
                       </CardContent>
                     </Card>
                   ))}

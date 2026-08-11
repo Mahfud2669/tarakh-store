@@ -10,12 +10,18 @@ const CartContext = createContext<CartContextValue | null>(null)
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const addItem = (item: Omit<CartItem, "quantity">) => {
-    if (items.length > 0 && items[0].gameId !== item.gameId) return false
+    let accepted = true
     setItems((current) => {
+      if (current.length > 0 && current[0].gameId !== item.gameId) {
+        accepted = false
+        return current
+      }
       const found = current.find((entry) => entry.pkg.id === item.pkg.id)
-      return found ? current.map((entry) => entry.pkg.id === item.pkg.id ? { ...entry, quantity: entry.quantity + 1 } : entry) : [...current, { ...item, quantity: 1 }]
+      return found
+        ? current.map((entry) => entry.pkg.id === item.pkg.id ? { ...entry, quantity: entry.quantity + 1 } : entry)
+        : [...current, { ...item, quantity: 1 }]
     })
-    return true
+    return accepted
   }
   const removeItem = (id: number) => setItems((current) => current.filter((item) => item.pkg.id !== id))
   const value = useMemo(() => ({ items, addItem, removeItem, clear: () => setItems([]), total: items.reduce((sum, item) => sum + item.pkg.price * item.quantity, 0), gameId: items[0]?.gameId ?? null }), [items])

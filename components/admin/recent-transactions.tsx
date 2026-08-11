@@ -11,7 +11,7 @@ export function RecentTransactions() {
   useEffect(() => {
     const fetchRecentTransactions = async () => {
       try {
-        const response = await fetch("/api/admin/transactions?limit=5")
+        const response = await fetch("/api/admin/transactions?limit=3")
         const data = await response.json()
         if (data.success) {
           setTransactions(data.transactions)
@@ -29,7 +29,7 @@ export function RecentTransactions() {
   if (loading) {
     return (
       <div className="space-y-3">
-        {[...Array(5)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <div key={i} className="animate-pulse flex items-center justify-between p-3 border rounded-lg">
             <div className="space-y-2">
               <div className="h-4 bg-gray-300 rounded w-24"></div>
