@@ -54,18 +54,18 @@ export function AdminSidebar() {
       )}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        {!collapsed && (
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">T</span>
-            </div>
+      <div className={cn("border-b border-gray-200 flex items-center", collapsed ? "justify-center p-3" : "justify-between p-4")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "space-x-2")}>
+          <div className="w-8 h-8 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">T</span>
+          </div>
+          {!collapsed && (
             <div>
               <h2 className="font-bold text-gray-900">AKAZA</h2>
               <p className="text-xs text-gray-500">Admin Panel</p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
@@ -91,7 +91,7 @@ export function AdminSidebar() {
                 "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 collapsed ? "justify-center" : "space-x-3",
                 isActive
-                  ? "bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-200"
+                  ? "bg-teal-600 text-white shadow-sm hover:bg-teal-700"
                   : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
               )}
               title={collapsed ? item.name : undefined}
