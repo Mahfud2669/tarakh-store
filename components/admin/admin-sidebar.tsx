@@ -50,7 +50,7 @@ export function AdminSidebar() {
     <div
       className={cn(
         "bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex flex-col",
-        collapsed ? "w-16" : "w-64",
+        collapsed ? "w-20" : "w-64",
       )}
     >
       {/* Header */}
@@ -88,7 +88,8 @@ export function AdminSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                collapsed ? "justify-center" : "space-x-3",
                 isActive
                   ? "bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-200"
                   : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",

@@ -14,7 +14,7 @@ export function RecentTransactions() {
         const response = await fetch("/api/admin/transactions?limit=3")
         const data = await response.json()
         if (data.success) {
-          setTransactions(data.transactions)
+          setTransactions((data.transactions || []).slice(0, 3))
         }
       } catch (error) {
         console.error("Error fetching recent transactions:", error)
