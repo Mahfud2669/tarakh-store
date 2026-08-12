@@ -49,22 +49,15 @@ export function AdminSidebar() {
   return (
     <div
       className={cn(
-        "bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex flex-col",
+        "relative z-20 bg-white border-r border-gray-200 shadow-xl transition-all duration-300 ease-in-out flex flex-col",
         collapsed ? "w-20" : "w-64",
       )}
     >
       {/* Header */}
-      <div className={cn("border-b border-gray-200 flex items-center", collapsed ? "justify-center p-3" : "justify-between p-4")}>
-        <div className={cn("flex items-center", collapsed ? "gap-1" : "space-x-2")}>
-          <div className={cn("h-8 rounded-lg bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center", collapsed ? "w-14 gap-1" : "w-8")}>
-            <span className="text-white font-bold text-sm">T</span>
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? "Perbesar sidebar" : "Perkecil sidebar"}
-              className="rounded p-0.5 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
-            >
-              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </button>
+      <div className={cn("border-b border-gray-200 flex items-center", collapsed ? "justify-center gap-3 p-3" : "justify-between p-4")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "space-x-2")}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-700">
+            <span className="text-sm font-bold text-white">T</span>
           </div>
           {!collapsed && (
             <div>
@@ -73,6 +66,13 @@ export function AdminSidebar() {
             </div>
           )}
         </div>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? "Perbesar sidebar" : "Perkecil sidebar"}
+          className="rounded p-1 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
       </div>
 
       {/* Navigation */}
