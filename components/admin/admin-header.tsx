@@ -100,7 +100,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
   const displayName = user?.name || user?.username || user?.email || "Admin"
 
   return (
-    <header className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 shadow-lg border-b border-teal-800">
+    <header className="relative z-10 bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 shadow-xl border-b border-teal-800">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div>

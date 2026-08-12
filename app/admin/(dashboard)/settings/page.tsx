@@ -194,8 +194,8 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Account Information */}
-          <Card className="bg-white border-teal-200 shadow-sm">
-            <CardHeader className="bg-teal-50 border-b border-teal-200">
+          <Card className="bg-white border-black shadow-sm">
+            <CardHeader className="bg-teal-50 border-b border-black">
               <CardTitle className="text-teal-800 flex items-center gap-2">
                 <User className="w-5 h-5" />
                 Informasi Akun
@@ -274,8 +274,8 @@ export default function SettingsPage() {
           </Card>
 
           {/* Password Change */}
-          <Card className="bg-white border-teal-200 shadow-sm">
-            <CardHeader className="bg-teal-50 border-b border-teal-200">
+          <Card className="bg-white border-black shadow-sm">
+            <CardHeader className="bg-teal-50 border-b border-black">
               <CardTitle className="text-teal-800 flex items-center gap-2">
                 <Key className="w-5 h-5" />
                 Ubah Password

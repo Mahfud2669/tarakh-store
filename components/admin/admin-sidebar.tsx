@@ -55,9 +55,16 @@ export function AdminSidebar() {
     >
       {/* Header */}
       <div className={cn("border-b border-gray-200 flex items-center", collapsed ? "justify-center p-3" : "justify-between p-4")}>
-        <div className={cn("flex items-center", collapsed ? "justify-center" : "space-x-2")}>
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg flex items-center justify-center">
+        <div className={cn("flex items-center", collapsed ? "gap-1" : "space-x-2")}>
+          <div className={cn("h-8 rounded-lg bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center", collapsed ? "w-14 gap-1" : "w-8")}>
             <span className="text-white font-bold text-sm">T</span>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? "Perbesar sidebar" : "Perkecil sidebar"}
+              className="rounded p-0.5 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+            >
+              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </button>
           </div>
           {!collapsed && (
             <div>
@@ -66,16 +73,6 @@ export function AdminSidebar() {
             </div>
           )}
         </div>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4 text-gray-600" />
-          ) : (
-            <ChevronLeft className="w-4 h-4 text-gray-600" />
-          )}
-        </button>
       </div>
 
       {/* Navigation */}
