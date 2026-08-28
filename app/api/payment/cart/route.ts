@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { createGameTransaction } from "@/lib/database"
-import { sendBaileysMessage } from "@/lib/baileys-service"
 
 export async function POST(request: Request) {
   try {
@@ -38,8 +37,6 @@ export async function POST(request: Request) {
       console.error("[v0] Midtrans cart error", response.status, data)
       return NextResponse.json({ success: false, error: data.error_messages?.join(", ") || `Midtrans menolak pembayaran (${response.status}).` }, { status: 502 })
     }
-  const message = `Transaksi berhasil dibuat di Akaza Store.\nTransaksi ID: ${orderId}\nGame: ${first.gameName}\nTotal: Rp ${total.toLocaleString("id-ID")}\nGunakan ID ini untuk mencari transaksi di menu Riwayat Transaksi.`
-  void sendBaileysMessage(String(phone), message).catch((error) => console.error("[v0] Baileys transaction message failed", error))
-  return NextResponse.json({ success: true, token: data.token, order_id: orderId })
+    return NextResponse.json({ success: true, token: data.token, order_id: orderId })
   } catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Terjadi kesalahan server." }, { status: 500 }) }
 }
