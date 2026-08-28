@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { updateTransactionStatus, getTransactionByOrderId, logTransactionStatus } from "@/lib/database"
 import crypto from "crypto"
+import { sendBaileysMessage } from "@/lib/baileys-service"
 
 const MIDTRANS_SERVER_KEY = "Mid-server-GopHRF_jXA9eU-w2yuJTc_vR"
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       payment_method: payment_type,
     })
 
-    // Log status change
+    // Log status change and notify the customer only after Midtrans confirms payment.
     if (updatedTransaction) {
       await logTransactionStatus(
         updatedTransaction.id,
@@ -77,6 +78,28 @@ export async function POST(request: NextRequest) {
         `Midtrans webhook: ${transaction_status}`,
       )
       console.log("✅ Transaction status logged successfully")
+
+      if (newStatus === "success" && existingTransaction.status !== "success" && existingTransaction.customer_phone) {
+        const message = [
+          "Selamat transaksi anda telah berhasil!",
+          "",
+          `Transaksi ID: ${order_id}`,
+`Transaksi ID : ${order_id}`,
+  `User ID : ${updatedTransaction.user_id}`,
+  `Game : ${updatedTransaction.game_name}`,
+  `Payment : ${updatedTransaction.payment_method || payment_type || "Midtrans"}`,
+  `Tanggal : ${new Date(updatedTransaction.created_at).toLocaleString("id-ID")}`,
+  "",
+  "Terimakasih telah order di Akaza.Store",
+  ].join("\n")
+
+        try {
+          await sendBaileysMessage(updatedTransaction.customer_phone, message)
+          console.log("✅ Success notification sent via Baileys")
+        } catch (notificationError) {
+          console.error("[v0] Baileys success notification failed", notificationError)
+        }
+      }
     }
 
     console.log(`✅ Transaction ${order_id} updated to ${newStatus}`)
