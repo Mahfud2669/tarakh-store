@@ -9,6 +9,7 @@ import {
   Gamepad2,
   Package,
   CreditCard,
+  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
@@ -34,6 +35,11 @@ const navigation = [
     href: "/admin/transactions",
     icon: CreditCard,
   },
+  {
+    name: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
+  },
 ]
 
 export function AdminSidebar() {
@@ -43,32 +49,29 @@ export function AdminSidebar() {
   return (
     <div
       className={cn(
-        "bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex flex-col",
-        collapsed ? "w-16" : "w-64",
+        "relative z-20 bg-white border-r border-gray-200 shadow-xl transition-all duration-300 ease-in-out flex flex-col",
+        collapsed ? "w-20" : "w-64",
       )}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        {!collapsed && (
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">T</span>
-            </div>
+      <div className={cn("border-b border-gray-200 flex items-center", collapsed ? "justify-center gap-3 p-3" : "justify-between p-4")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "space-x-2")}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-700">
+            <span className="text-sm font-bold text-white">T</span>
+          </div>
+          {!collapsed && (
             <div>
               <h2 className="font-bold text-gray-900">AKAZA</h2>
               <p className="text-xs text-gray-500">Admin Panel</p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          aria-label={collapsed ? "Perbesar sidebar" : "Perkecil sidebar"}
+          className="rounded p-1 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
         >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4 text-gray-600" />
-          ) : (
-            <ChevronLeft className="w-4 h-4 text-gray-600" />
-          )}
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </div>
 
@@ -82,9 +85,10 @@ export function AdminSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                collapsed ? "justify-center" : "space-x-3",
                 isActive
-                  ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg"
+                  ? "bg-teal-600 text-white shadow-sm hover:bg-teal-700"
                   : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
               )}
               title={collapsed ? item.name : undefined}

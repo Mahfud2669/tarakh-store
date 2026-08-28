@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { User, Calendar, Shield, Key, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react"
+import { BaileysPanel } from "@/components/admin/baileys-panel"
 
 interface AdminUser {
   id: number
@@ -281,17 +282,6 @@ export default function SettingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 bg-white space-y-6">
-              {/* Security Tips */}
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Tips Keamanan:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Gunakan minimal 8 karakter</li>
-                  <li>• Kombinasi huruf besar, kecil, dan angka</li>
-                  <li>• Jangan gunakan informasi pribadi</li>
-                  <li>• Ubah password secara berkala</li>
-                </ul>
-              </div>
-
               {/* Password Form */}
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div className="space-y-2">
@@ -394,6 +384,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </div>
+      <BaileysPanel />
       </div>
     </div>
   )
