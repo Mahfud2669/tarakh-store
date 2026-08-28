@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [{ source: "/transactions", destination: "/", permanent: false }]
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
