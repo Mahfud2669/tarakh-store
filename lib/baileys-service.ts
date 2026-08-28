@@ -3,11 +3,12 @@ import "server-only"
 import makeWASocket, { DisconnectReason, useMultiFileAuthState, type WASocket } from "@whiskeysockets/baileys"
 import P from "pino"
 import QRCode from "qrcode"
+import { rm } from "node:fs/promises"
 
 const authDir = process.env.BAILEYS_AUTH_DIR || ".data/baileys-auth"
 const logger = P({ level: process.env.LOG_LEVEL || "silent" })
 
-type ServiceState = { socket: WASocket | null; qrDataUrl: string | null; status: "stopped" | "connecting" | "qr" | "connected" | "error"; error?: string }
+type ServiceState = { socket: WASocket | null; qrDataUrl: string | null; status: "stopped" | "connecting" | "qr" | "connected" | "error"; error?: string; manuallyStopped?: boolean }
 const globalState = globalThis as typeof globalThis & { __baileysState?: ServiceState; __baileysStarting?: Promise<void> }
 const state = globalState.__baileysState ?? (globalState.__baileysState = { socket: null, qrDataUrl: null, status: "stopped" })
 
@@ -16,6 +17,7 @@ export async function startBaileys() {
   globalState.__baileysStarting = (async () => {
     state.status = "connecting"
     state.error = undefined
+    state.manuallyStopped = false
     const { state: authState, saveCreds } = await useMultiFileAuthState(authDir)
     const socket = makeWASocket({ auth: authState, printQRInTerminal: false, logger })
     state.socket = socket
@@ -25,8 +27,9 @@ export async function startBaileys() {
       if (connection === "open") { state.status = "connected"; state.qrDataUrl = null }
       if (connection === "close") {
         state.socket = null
-        const shouldReconnect = (lastDisconnect?.error as { output?: { statusCode?: number } } | undefined)?.output?.statusCode !== DisconnectReason.loggedOut
-        state.status = shouldReconnect ? "stopped" : "error"
+        const wasManuallyStopped = state.manuallyStopped === true
+        const shouldReconnect = !wasManuallyStopped && (lastDisconnect?.error as { output?: { statusCode?: number } } | undefined)?.output?.statusCode !== DisconnectReason.loggedOut
+        state.status = shouldReconnect ? "stopped" : wasManuallyStopped ? "stopped" : "error"
         if (shouldReconnect) setTimeout(() => void startBaileys(), 1500)
       }
     })
@@ -36,7 +39,14 @@ export async function startBaileys() {
 
 export function getBaileysStatus() { return { status: state.status, qrDataUrl: state.qrDataUrl, error: state.error } }
 
+export async function refreshBaileysQr() {
+  await disconnectBaileys()
+  await rm(authDir, { recursive: true, force: true })
+  await startBaileys()
+}
+
 export async function disconnectBaileys() {
+  state.manuallyStopped = true
   const socket = state.socket
   state.socket = null
   state.qrDataUrl = null
