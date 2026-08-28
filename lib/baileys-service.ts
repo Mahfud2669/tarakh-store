@@ -57,12 +57,22 @@ export async function disconnectBaileys() {
 }
 
 export async function sendBaileysMessage(to: string, message: string) {
-  await startBaileys()
-  if (!state.socket || state.status !== "connected") throw new Error("Baileys belum terhubung. Scan QR terlebih dahulu.")
   const digits = to.replace(/\D/g, "").replace(/^0/, "62")
   if (digits.length < 10) throw new Error("Nomor WhatsApp tidak valid.")
+
+  await startBaileys()
+  // A webhook can arrive just after the socket reports open. Give the connection
+  // a short window to become usable instead of failing immediately.
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    if (state.socket && state.status === "connected") break
+    await new Promise((resolve) => setTimeout(resolve, 750))
+  }
+  if (!state.socket || state.status !== "connected") {
+    throw new Error("Baileys belum terhubung pada instance server ini. Jalankan satu worker Baileys persistent.")
+  }
+
   const jid = `${digits}@s.whatsapp.net`
-  const [contact] = await state.socket.onWhatsApp(digits)
-  if (!contact?.exists) throw new Error("Nomor WhatsApp tidak terdaftar atau koneksi Baileys belum siap.")
+  // Do not call onWhatsApp first: that lookup is unreliable for some numbers
+  // and can prevent a valid direct message from being sent.
   await state.socket.sendMessage(jid, { text: message })
 }

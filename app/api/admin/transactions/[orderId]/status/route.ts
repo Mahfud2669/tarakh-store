@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { updateTransactionStatus, logTransactionStatus, getTransactionByOrderId } from "@/lib/database"
+import { sendBaileysMessage } from "@/lib/baileys-service"
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
   try {
@@ -23,6 +24,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
         status,
         "Manual status update by admin",
       )
+
+      if (status === "success" && currentTransaction.status !== "success" && updatedTransaction.customer_phone) {
+        const message = [
+          "Selamat transaksi anda telah berhasil!",
+          "",
+          `Transaksi ID: ${orderId}`,
+          `Game: ${updatedTransaction.game_name}`,
+          `Diamond: ${Number(updatedTransaction.package_diamonds).toLocaleString("id-ID")}`,
+          `Total: Rp ${Number(updatedTransaction.amount).toLocaleString("id-ID")}`,
+          "Status: Berhasil",
+          "",
+          "Simpan Transaksi ID untuk mencari riwayat transaksi Anda.",
+        ].join("\\n")
+        try {
+          await sendBaileysMessage(updatedTransaction.customer_phone, message)
+        } catch (notificationError) {
+          console.error("[v0] Manual success notification failed", notificationError)
+        }
+      }
     }
 
     return NextResponse.json({
