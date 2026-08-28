@@ -30,13 +30,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
           "Selamat transaksi anda telah berhasil!",
           "",
           `Transaksi ID: ${orderId}`,
-          `Game: ${updatedTransaction.game_name}`,
-          `Diamond: ${Number(updatedTransaction.package_diamonds).toLocaleString("id-ID")}`,
-          `Total: Rp ${Number(updatedTransaction.amount).toLocaleString("id-ID")}`,
-          "Status: Berhasil",
-          "",
-          "Simpan Transaksi ID untuk mencari riwayat transaksi Anda.",
-        ].join("\\n")
+`Transaksi ID : ${orderId}`,
+  `User ID : ${updatedTransaction.user_id}`,
+  `Game : ${updatedTransaction.game_name}`,
+  `Payment : ${updatedTransaction.payment_method || "Midtrans"}`,
+  `Tanggal : ${new Date(updatedTransaction.created_at).toLocaleString("id-ID")}`,
+  "",
+  "Terimakasih telah order di Akaza.Store",
+  ].join("\n")
         try {
           await sendBaileysMessage(updatedTransaction.customer_phone, message)
         } catch (notificationError) {

@@ -84,13 +84,14 @@ export async function POST(request: NextRequest) {
           "Selamat transaksi anda telah berhasil!",
           "",
           `Transaksi ID: ${order_id}`,
-          `Game: ${updatedTransaction.game_name}`,
-          `Diamond: ${Number(updatedTransaction.package_diamonds).toLocaleString("id-ID")}`,
-          `Total: Rp ${Number(updatedTransaction.amount).toLocaleString("id-ID")}`,
-          `Status: Berhasil`,
-          "",
-          "Simpan Transaksi ID untuk mencari riwayat transaksi Anda.",
-        ].join("\\n")
+`Transaksi ID : ${order_id}`,
+  `User ID : ${updatedTransaction.user_id}`,
+  `Game : ${updatedTransaction.game_name}`,
+  `Payment : ${updatedTransaction.payment_method || payment_type || "Midtrans"}`,
+  `Tanggal : ${new Date(updatedTransaction.created_at).toLocaleString("id-ID")}`,
+  "",
+  "Terimakasih telah order di Akaza.Store",
+  ].join("\n")
 
         try {
           await sendBaileysMessage(updatedTransaction.customer_phone, message)
