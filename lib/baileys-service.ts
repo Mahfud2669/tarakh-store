@@ -36,6 +36,16 @@ export async function startBaileys() {
 
 export function getBaileysStatus() { return { status: state.status, qrDataUrl: state.qrDataUrl, error: state.error } }
 
+export async function disconnectBaileys() {
+  const socket = state.socket
+  state.socket = null
+  state.qrDataUrl = null
+  state.status = "stopped"
+  if (socket) {
+    try { await socket.logout() } catch { socket.end(undefined) }
+  }
+}
+
 export async function sendBaileysMessage(to: string, message: string) {
   await startBaileys()
   if (!state.socket || state.status !== "connected") throw new Error("Baileys belum terhubung. Scan QR terlebih dahulu.")
