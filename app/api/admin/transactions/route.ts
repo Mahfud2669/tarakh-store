@@ -8,6 +8,8 @@ export async function GET(request: Request) {
     const gameId = searchParams.get("game_id")
     const dateFrom = searchParams.get("date_from")
     const dateTo = searchParams.get("date_to")
+    const requestedLimit = Number.parseInt(searchParams.get("limit") || "100", 10)
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 100
 
     let query = sql`
       SELECT * FROM transactions 
@@ -27,7 +29,7 @@ export async function GET(request: Request) {
       query = sql`${query} AND created_at <= ${dateTo}`
     }
 
-    query = sql`${query} ORDER BY created_at DESC LIMIT 100`
+    query = sql`${query} ORDER BY created_at DESC LIMIT ${limit}`
 
     const transactions = await query
 
