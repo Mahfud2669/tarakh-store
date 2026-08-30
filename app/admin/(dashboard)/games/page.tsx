@@ -14,6 +14,7 @@ interface Game {
   name: string
   description: string
   icon_url: string
+  image_url?: string
   is_active: boolean
   created_at: string
   package_count?: number

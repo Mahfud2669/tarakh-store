@@ -17,6 +17,7 @@ interface Game {
   name: string
   description: string
   icon_url: string
+  image_url?: string
   is_active: boolean
   created_at: string
 }
@@ -30,6 +31,7 @@ const defaultFormData = {
   name: "",
   description: "",
   icon_url: "",
+  image_url: "",
   is_active: true,
 }
 
@@ -44,9 +46,10 @@ export function GameForm({ game, onClose }: GameFormProps) {
         name: game.name || "",
         description: game.description || "",
         icon_url: game.icon_url || "",
+        image_url: game.image_url || game.icon_url || "",
         is_active: game.is_active ?? true,
       })
-      setImagePreview(game.icon_url || "")
+      setImagePreview(game.image_url || game.icon_url || "")
     } else {
       setFormData(defaultFormData)
       setImagePreview("")
@@ -58,7 +61,7 @@ export function GameForm({ game, onClose }: GameFormProps) {
     setLoading(true)
 
     try {
-      const url = game ? `/api/admin/games/${game.id}` : "/api/admin/games"
+        const url = game ? `/api/admin/games/${game.id}` : "/api/admin/games"
       const method = game ? "PATCH" : "POST"
 
       const response = await fetch(url, {
@@ -146,6 +149,19 @@ export function GameForm({ game, onClose }: GameFormProps) {
                     placeholder="https://example.com/icon.png"
                     className="mt-1 border-teal-200 focus:border-teal-500 focus:ring-teal-500"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="image_url" className="text-sm font-medium text-gray-700">URL Banner Game</Label>
+                  <Input
+                    id="image_url"
+                    type="url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    placeholder="https://example.com/banner-game.jpg"
+                    className="mt-1 border-teal-200 focus:border-teal-500 focus:ring-teal-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Gunakan gambar landscape untuk banner halaman game.</p>
                 </div>
 
                 {/* Status Toggle with Custom Colors */}
