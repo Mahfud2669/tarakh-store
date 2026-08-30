@@ -4,7 +4,7 @@ import { createContext, useContext, useMemo, useState } from "react"
 import type { GamePackage } from "@/lib/database"
 
 export type CartItem = { gameId: string; gameName: string; pkg: GamePackage; quantity: number }
-type CartContextValue = { items: CartItem[]; addItem: (item: Omit<CartItem, "quantity">) => boolean; removeItem: (id: number) => void; clear: () => void; total: number; gameId: string | null }
+type CartContextValue = { items: CartItem[]; addItem: (item: Omit<CartItem, "quantity">) => boolean; updateQuantity: (id: number, delta: number) => void; removeItem: (id: number) => void; clear: () => void; total: number; gameId: string | null }
 const CartContext = createContext<CartContextValue | null>(null)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
@@ -23,8 +23,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     })
     return accepted
   }
+  const updateQuantity = (id: number, delta: number) => setItems((current) => current.flatMap((item) => {
+    if (item.pkg.id !== id) return [item]
+    const quantity = item.quantity + delta
+    return quantity > 0 ? [{ ...item, quantity }] : []
+  }))
   const removeItem = (id: number) => setItems((current) => current.filter((item) => item.pkg.id !== id))
-  const value = useMemo(() => ({ items, addItem, removeItem, clear: () => setItems([]), total: items.reduce((sum, item) => sum + item.pkg.price * item.quantity, 0), gameId: items[0]?.gameId ?? null }), [items])
+  const value = useMemo(() => ({ items, addItem, updateQuantity, removeItem, clear: () => setItems([]), total: items.reduce((sum, item) => sum + item.pkg.price * item.quantity, 0), gameId: items[0]?.gameId ?? null }), [items])
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
 export function useCart() { const context = useContext(CartContext); if (!context) throw new Error("useCart must be used within CartProvider"); return context }

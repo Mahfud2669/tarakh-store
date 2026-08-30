@@ -189,25 +189,25 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 text-white py-6 px-4 sm:px-6 shadow-xl">
+      <header className="sticky top-0 z-40 bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-4 py-4 text-white shadow-xl sm:px-6 sm:py-6">
         <div className="container mx-auto">
           <Link href="/" className="text-teal-100 hover:text-white mb-3 inline-block">
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
-          <div className="flex items-center justify-between"><h1 className="text-3xl font-bold">AKAZA STORE</h1><CartDrawer /></div>
+          <div className="flex items-center justify-between gap-3"><h1 className="text-2xl font-bold sm:text-3xl">AKAZA STORE</h1><CartDrawer /></div>
           <p className="text-teal-100 mt-1">Game Top-Up Terpercaya</p>
         </div>
       </header>
 
       {/* Game Info & Payment Form */}
-      <section className="py-12 px-4 sm:px-6">
+      <section className="px-3 py-6 sm:px-6 sm:py-12">
         <div className="container mx-auto">
           {/* Game Info */}
-          <div className="relative mb-12 min-h-72 overflow-hidden rounded-3xl bg-slate-900 shadow-xl">
+          <div className="relative mb-8 min-h-72 overflow-hidden rounded-3xl bg-slate-900 shadow-xl sm:mb-12">
             <Image src={game.image_url || '/placeholder.svg'} alt="" fill className="object-cover opacity-25 blur-[1px]" priority aria-hidden="true" />
             <div className="absolute inset-0 bg-slate-950/60" />
-            <div className="relative flex min-h-72 items-end gap-6 p-8 sm:p-12">
-              <Image src={game.image_url || '/placeholder.svg'} alt={`${game.name} logo`} width={112} height={112} className="h-24 w-24 rounded-2xl object-cover shadow-xl ring-4 ring-white/20 sm:h-28 sm:w-28" />
+            <div className="relative flex min-h-72 items-end gap-4 p-5 sm:gap-6 sm:p-12">
+              <Image src={game.image_url || '/placeholder.svg'} alt={`${game.name} logo`} width={112} height={112} className="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-xl ring-4 ring-white/20 sm:h-28 sm:w-28" />
               <div>
                 <h2 className="text-3xl font-bold text-white sm:text-5xl">{game.name}</h2>
                 <p className="mt-3 text-lg text-slate-200">Dapatkan mata uang game favorit dengan harga terbaik dan aman</p>
@@ -224,7 +224,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
               {/* Packages Grid */}
               <div className="rounded-3xl bg-white p-5 shadow-xl sm:p-7">
                 <h3 className="rounded-2xl bg-teal-700 px-5 py-4 text-2xl font-bold text-white">Pilih Paket</h3>
-                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 max-h-96 overflow-y-auto pr-2">
+                <div className="mt-6 grid max-h-96 grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 sm:gap-4 sm:pr-2">
                   {packages.map((pkg) => (
                     <Card key={pkg.id} onClick={() => setSelectedPackage(pkg)} className={`cursor-pointer border-slate-200 transition-all ${selectedPackage?.id === pkg.id ? 'ring-2 ring-teal-500 bg-teal-50 shadow-lg' : 'bg-slate-50 hover:shadow-lg'}`}>
                       <CardContent className="p-4 text-center">
