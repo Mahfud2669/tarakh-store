@@ -45,6 +45,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
   const [serverId, setServerId] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSnapLoaded, setIsSnapLoaded] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const { addItem } = useCart()
 
   // Unwrap params promise
@@ -141,7 +142,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
       const data = await response.json()
       if (data.success && data.token) {
         window.snap.pay(data.token, {
-          onSuccess: () => alert('Pembayaran berhasil! Top-up akan diproses.'),
+          onSuccess: () => { setShowSuccessModal(true); setIsProcessing(false) },
           onPending: () => alert('Pembayaran pending.'),
           onError: () => alert('Pembayaran gagal! Silakan coba lagi.'),
           onClose: () => setIsProcessing(false),
@@ -192,7 +193,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
           <Link href="/" className="text-teal-100 hover:text-white mb-3 inline-block">
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
-          <div className="flex items-center justify-between"><h1 className="text-3xl font-bold">TARAKH STORE</h1><CartDrawer /></div>
+          <div className="flex items-center justify-between"><h1 className="text-3xl font-bold">AKAZA STORE</h1><CartDrawer /></div>
           <p className="text-teal-100 mt-1">Game Top-Up Terpercaya</p>
         </div>
       </header>
@@ -201,37 +202,34 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
       <section className="py-12 px-4 sm:px-6">
         <div className="container mx-auto">
           {/* Game Info */}
-          <Card className="mb-12 border-0 shadow-lg">
-            <CardContent className="p-8 sm:p-12">
-              <div className="flex flex-col sm:flex-row items-center gap-8">
-                <div className={`w-32 h-32 sm:w-40 sm:h-40 ${game.color || 'bg-gray-500'} rounded-2xl flex items-center justify-center shadow-xl flex-shrink-0`}>
-                  <Image src={game.image_url || '/placeholder.svg'} alt={game.name} width={120} height={120} className="rounded-lg" />
-                </div>
-                <div className="flex-1 text-center sm:text-left">
-                  <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">{game.name}</h2>
-                  <p className="text-gray-600 text-lg mb-6">Dapatkan mata uang game favorit dengan harga terbaik dan aman</p>
-                  <div className="bg-teal-50 border-2 border-teal-200 rounded-lg p-4 inline-block">
-                    <p className="text-teal-600 text-sm font-semibold mb-1">Paket Tersedia</p>
-                    <p className="text-2xl font-bold text-teal-700">{packages.length}</p>
-                  </div>
-                </div>
+          <div className="relative mb-12 min-h-72 overflow-hidden rounded-3xl bg-slate-900 shadow-xl">
+            <Image src={game.image_url || '/placeholder.svg'} alt={game.name} fill className="object-cover" priority />
+            <div className="absolute inset-0 bg-slate-950/65" />
+            <div className="relative flex min-h-72 items-end p-8 sm:p-12">
+              <div>
+                <h2 className="text-3xl font-bold text-white sm:text-5xl">{game.name}</h2>
+                <p className="mt-3 text-lg text-slate-200">Dapatkan mata uang game favorit dengan harga terbaik dan aman</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="ml-auto hidden rounded-2xl bg-teal-600 px-5 py-4 text-center text-white sm:block">
+                <p className="text-sm font-semibold">Paket Tersedia</p>
+                <p className="text-3xl font-bold">{packages.length}</p>
+              </div>
+            </div>
+          </div>
 
           {packages.length > 0 ? (
             <div className="grid grid-cols-1 gap-8">
               {/* Packages Grid */}
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">Pilih Paket</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-96 overflow-y-auto pr-2">
+              <div className="rounded-3xl bg-slate-900 p-5 sm:p-7">
+                <h3 className="rounded-2xl bg-teal-700 px-5 py-4 text-2xl font-bold text-white">Pilih Paket</h3>
+                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 max-h-96 overflow-y-auto pr-2">
                   {packages.map((pkg) => (
                     <Card key={pkg.id} onClick={() => setSelectedPackage(pkg)} className={`cursor-pointer transition-all ${selectedPackage?.id === pkg.id ? 'ring-2 ring-teal-500 bg-teal-50 shadow-lg' : 'hover:shadow-lg'}`}>
                       <CardContent className="p-4 text-center">
                         <p className="font-bold text-teal-600 text-xl mb-1">{(pkg.diamonds || 0).toLocaleString('id-ID')}</p>
                         {(pkg.bonus || 0) > 0 && <p className="text-orange-600 text-sm font-semibold mb-2">+{(pkg.bonus || 0).toLocaleString('id-ID')} Bonus</p>}
                         <p className="text-gray-800 font-bold">Rp {(pkg.price || 0).toLocaleString('id-ID')}</p>
-                        <Button type="button" size="sm" className="mt-3 w-full bg-teal-600 text-white hover:bg-teal-700" onClick={(event) => { event.stopPropagation(); if (!addItem({ gameId: gameId!, gameName: game.name, pkg })) alert('Keranjang hanya dapat berisi package dari satu game.') }}>Masuk Keranjang</Button>
+                        <Button type="button" size="sm" className="mt-3 w-full bg-teal-600 text-white hover:bg-teal-700" onClick={(event) => { event.stopPropagation(); if (!addItem({ gameId: gameId!, gameName: game.name, pkg })) alert('Keranjang hanya dapat berisi package dari satu game.'); else { const cart = document.querySelector('[aria-label="Buka keranjang"]'); cart?.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 450 }) } }}>Masuk Keranjang</Button>
                       </CardContent>
                     </Card>
                   ))}
@@ -252,6 +250,17 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
           )}
         </div>
       </section>
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="payment-success-title">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="bg-teal-700 px-6 py-4 text-xl font-bold text-white" id="payment-success-title">caution!</div>
+            <div className="space-y-5 p-6 text-slate-700">
+              <p>Transaksi mu berhasil, mohon tunggu admin untuk proses selanjutnya!</p>
+              <Button className="w-full bg-teal-700 text-white hover:bg-teal-800" onClick={() => setShowSuccessModal(false)}>Mengerti</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
