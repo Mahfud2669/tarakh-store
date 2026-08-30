@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Shield, Eye, EyeOff } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
@@ -74,15 +74,6 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-600 rounded-full mb-4">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
-          <p className="text-gray-600 mt-2">Masuk ke dashboard admin Tarakh Store</p>
-        </div>
-
         <Card className="shadow-lg border-0">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-xl text-center">Masuk sebagai Admin</CardTitle>
@@ -144,19 +135,6 @@ export default function AdminLogin() {
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-2">Gunakan akun admin Anda:</p>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>
-                  <span className="font-medium">Email:</span> user123@yopmail.com
-                </p>
-                <p>
-                  <span className="font-medium">Password:</span> [password Anda]
-                </p>
-              </div>
-            </div>
 
             {/* Back to Store */}
             <div className="mt-6 text-center">

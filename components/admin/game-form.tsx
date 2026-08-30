@@ -93,7 +93,7 @@ export function GameForm({ game, onClose }: GameFormProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
         <CardHeader className="bg-gradient-to-r from-teal-50 to-white border-b border-teal-200">
           <div className="flex justify-between items-center">
             <CardTitle className="text-teal-800">{game ? "Edit Game" : "Tambah Game Baru"}</CardTitle>
