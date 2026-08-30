@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 text-white py-4 sm:py-6 px-4 sm:px-6 shadow-lg">
+      <header className="bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 px-3 py-3 text-white shadow-lg sm:px-6 sm:py-6">
         <div className="container mx-auto">
           <div className="flex items-center justify-between"><h1 className="text-2xl sm:text-3xl font-bold tracking-wider animate-fade-in">AKAZA STORE</h1><div className="flex items-center gap-1"><CartDrawer /><TransactionDrawer /></div></div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

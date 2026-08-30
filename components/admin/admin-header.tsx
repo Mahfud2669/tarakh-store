@@ -101,11 +101,11 @@ export function AdminHeader({ user }: AdminHeaderProps) {
 
   return (
     <header className="relative z-10 bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 shadow-xl border-b border-teal-800">
-      <div className="px-6 py-4">
+      <div className="px-3 py-2 sm:px-6 sm:py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">AKAZA STORE</h1>
-            <p className="text-teal-100 text-sm">Admin Dashboard</p>
+            <h1 className="text-lg font-bold text-white sm:text-2xl">AKAZA STORE</h1>
+            <p className="text-xs text-teal-100 sm:text-sm">Admin Dashboard</p>
           </div>
 
           <div className="flex items-center space-x-4">

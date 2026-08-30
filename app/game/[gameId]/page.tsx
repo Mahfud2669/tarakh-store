@@ -206,11 +206,11 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
           <div className="relative mb-8 min-h-72 overflow-hidden rounded-3xl bg-slate-900 shadow-xl sm:mb-12">
             <Image src={game.image_url || '/placeholder.svg'} alt="" fill className="object-cover opacity-25 blur-[1px]" priority aria-hidden="true" />
             <div className="absolute inset-0 bg-slate-950/60" />
-            <div className="relative flex min-h-72 items-end gap-4 p-5 sm:gap-6 sm:p-12">
-              <Image src={game.image_url || '/placeholder.svg'} alt={`${game.name} logo`} width={112} height={112} className="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-xl ring-4 ring-white/20 sm:h-28 sm:w-28" />
+            <div className="relative flex min-h-72 items-end gap-3 p-4 sm:gap-6 sm:p-12">
+              <Image src={game.image_url || '/placeholder.svg'} alt={`${game.name} logo`} width={112} height={112} className="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-xl ring-4 ring-white/20 sm:h-28 sm:w-28" />
               <div>
-                <h2 className="text-3xl font-bold text-white sm:text-5xl">{game.name}</h2>
-                <p className="mt-3 text-lg text-slate-200">Dapatkan mata uang game favorit dengan harga terbaik dan aman</p>
+                <h2 className="text-2xl font-bold leading-tight text-white sm:text-5xl">{game.name}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-200 sm:mt-3 sm:text-lg">Dapatkan mata uang game favorit dengan harga terbaik dan aman</p>
               </div>
               <div className="ml-auto hidden rounded-2xl bg-teal-600 px-5 py-4 text-center text-white sm:block">
                 <p className="text-sm font-semibold">Paket Tersedia</p>
@@ -224,7 +224,7 @@ export default function GameDetailPage({ params: paramsPromise }: GameDetailPage
               {/* Packages Grid */}
               <div className="rounded-3xl bg-white p-5 shadow-xl sm:p-7">
                 <h3 className="rounded-2xl bg-teal-700 px-5 py-4 text-2xl font-bold text-white">Pilih Paket</h3>
-                <div className="mt-6 grid max-h-96 grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 sm:gap-4 sm:pr-2">
+                <div className="mt-6 grid max-h-[32rem] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:max-h-96 sm:gap-4 sm:pr-2">
                   {packages.map((pkg) => (
                     <Card key={pkg.id} onClick={() => setSelectedPackage(pkg)} className={`cursor-pointer border-slate-200 transition-all ${selectedPackage?.id === pkg.id ? 'ring-2 ring-teal-500 bg-teal-50 shadow-lg' : 'bg-slate-50 hover:shadow-lg'}`}>
                       <CardContent className="p-4 text-center">
